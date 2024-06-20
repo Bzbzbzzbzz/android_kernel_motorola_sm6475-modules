@@ -63,6 +63,7 @@ struct upgrade_module module_list[] = {
 struct upgrade_func *upgrade_func_list[] = {
     &upgrade_func_ft5452i,
     &upgrade_func_ft5452,
+    &upgrade_func_ft5452j
 };
 
 struct fts_upgrade *fwupgrade;

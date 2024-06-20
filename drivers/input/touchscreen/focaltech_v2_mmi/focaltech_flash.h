@@ -1,5 +1,5 @@
 /************************************************************************
-* Copyright (c) 2012-2020, Focaltech Systems (R)£¬All Rights Reserved.
+* Copyright (c) 2012-2020, Focaltech Systems (R)Â£Â¬All Rights Reserved.
 *
 * File Name: focaltech_flash.h
 *
@@ -203,6 +203,7 @@ struct fts_upgrade {
 *****************************************************************************/
 extern struct upgrade_func upgrade_func_ft5452i;
 extern struct upgrade_func upgrade_func_ft5452;
+extern struct upgrade_func upgrade_func_ft5452j;
 
 /*****************************************************************************
 * Static function prototypes

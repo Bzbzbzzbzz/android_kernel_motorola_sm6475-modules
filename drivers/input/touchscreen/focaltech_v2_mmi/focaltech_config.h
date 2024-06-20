@@ -118,6 +118,7 @@
 #define _FT3418             0x34180481
 
 #define _FT3519             0x35190489
+#define _FT3519T            0x3519E489
 
 #define _FT5446U            0x5446D083
 #define _FT5456U            0x5456D083
@@ -163,9 +164,12 @@
 /*
  * choose your ic chip type of focaltech
  */
- #if defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT3519)
+#if defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT3519)
 #define FTS_CHIP_TYPE   _FT3519
 #define FTS_CHIP_NAME   "ft3519"
+#elif defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT3519t)
+#define FTS_CHIP_TYPE   _FT3519T
+#define FTS_CHIP_NAME   "ft3519t"
 #else
 #define FTS_CHIP_TYPE   _FT3518U
 #define FTS_CHIP_NAME   "ft3518u"

@@ -338,6 +338,9 @@ static int fts_get_ic_information(struct fts_ts_data *ts_data)
 #if defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT3519)
     chip_id[0] = 0x54;
     chip_id[1] = 0x5E;
+#elif defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT3519t)
+    chip_id[0] = 0x54;
+    chip_id[1] = 0x5E;
 #else
     chip_id[0] = 0x54;
     chip_id[1] = 0x5C;
