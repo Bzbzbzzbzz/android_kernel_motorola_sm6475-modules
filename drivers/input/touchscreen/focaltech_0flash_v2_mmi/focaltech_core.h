@@ -368,6 +368,14 @@ int fts_gesture_suspend(struct fts_ts_data *ts_data);
 int fts_gesture_resume(struct fts_ts_data *ts_data);
 #endif
 
+/* Pinctrl functions */
+#if FTS_PINCTRL_EN
+int fts_pinctrl_init(struct fts_ts_data *ts);
+int fts_pinctrl_select_normal(struct fts_ts_data *ts);
+int fts_pinctrl_select_suspend(struct fts_ts_data *ts);
+int fts_pinctrl_select_release(struct fts_ts_data *ts);
+#endif
+
 /* Apk and functions */
 int fts_create_apk_debug_channel(struct fts_ts_data *);
 void fts_release_apk_debug_channel(struct fts_ts_data *);

@@ -1209,7 +1209,7 @@ static int fts_buffer_init(struct fts_ts_data *ts_data)
 }
 
 #if FTS_PINCTRL_EN
-static int fts_pinctrl_init(struct fts_ts_data *ts)
+int fts_pinctrl_init(struct fts_ts_data *ts)
 {
     int ret = 0;
 
@@ -1253,7 +1253,7 @@ err_pinctrl_get:
     return ret;
 }
 
-static int fts_pinctrl_select_normal(struct fts_ts_data *ts)
+int fts_pinctrl_select_normal(struct fts_ts_data *ts)
 {
     int ret = 0;
 
@@ -1267,7 +1267,7 @@ static int fts_pinctrl_select_normal(struct fts_ts_data *ts)
     return ret;
 }
 
-static int fts_pinctrl_select_suspend(struct fts_ts_data *ts)
+int fts_pinctrl_select_suspend(struct fts_ts_data *ts)
 {
     int ret = 0;
 
@@ -1281,7 +1281,7 @@ static int fts_pinctrl_select_suspend(struct fts_ts_data *ts)
     return ret;
 }
 
-static int fts_pinctrl_select_release(struct fts_ts_data *ts)
+int fts_pinctrl_select_release(struct fts_ts_data *ts)
 {
     int ret = 0;
 
