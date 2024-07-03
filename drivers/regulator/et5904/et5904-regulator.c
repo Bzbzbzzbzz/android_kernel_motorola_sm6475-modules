@@ -51,7 +51,7 @@ static const struct regmap_range et5904_writeable_ranges[] = {
 };
 
 static const struct regmap_range et5904_readable_ranges[] = {
-	regmap_reg_range(ET5904_CHIP_REV, ET5904_SEQ_STATUS),
+	regmap_reg_range(ET5904_CHIP_REV, ET5904_REG_CHIPID2),
 };
 
 static const struct regmap_range et5904_volatile_ranges[] = {
@@ -76,7 +76,7 @@ static const struct regmap_access_table et5904_volatile_table = {
 static const struct regmap_config et5904_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = 0x0F,
+	.max_register = ET5904_REG_CHIPID2,
 	.wr_table = &et5904_writeable_table,
 	.rd_table = &et5904_readable_table,
 	.volatile_table = &et5904_volatile_table,
@@ -196,7 +196,7 @@ static int et5904_regulator_init(struct et5904 *chip)
 	struct regulator_config config = { };
 	struct regulator_desc *rdesc;
 	u8 vsel_range[1];
-	int id, ret = 0;
+	int id, value, ret = 0;
 	const unsigned int ldo_regs[ET5904_MAX_REGULATORS] = {
 		ET5904_LDO1_VOUT,
 		ET5904_LDO2_VOUT,
@@ -204,12 +204,29 @@ static int et5904_regulator_init(struct et5904 *chip)
 		ET5904_LDO4_VOUT,
 	};
 
-	const unsigned int initial_voltage[ET5904_MAX_REGULATORS] = {
+	unsigned int initial_voltage[ET5904_MAX_REGULATORS] = {
 		0x4b,//LDO1  DVDD 1.05V
 		0x54,//LDO2 DVDD 1.1V
 		0x80,//LDO3 AVDD 2.8V
 		0x80,//LDO4 AVDD 2.8V
 	};
+
+
+	if(of_property_read_u32(chip->dev->of_node, "ldo1,init-value", &value) == 0){
+		initial_voltage[0] = value;
+	}
+
+	if(of_property_read_u32(chip->dev->of_node, "ldo2,init-value", &value) == 0){
+		initial_voltage[1] = value;
+	}
+
+	if(of_property_read_u32(chip->dev->of_node, "ldo3,init-value", &value) == 0){
+		initial_voltage[2] = value;
+	}
+
+	if(of_property_read_u32(chip->dev->of_node, "ldo4,init-value", &value) == 0){
+		initial_voltage[3] = value;
+	}
 
 	/*Disable all ldo output by default*/
 	ret = regmap_write(chip->regmap, ET5904_LDO_EN, chip->init_value);
@@ -269,6 +286,7 @@ static int et5904_i2c_probe(struct i2c_client *client,
 	struct device *dev = &client->dev;
 	struct et5904 *chip;
 	int error, cs_gpio, ret, i, value;
+	unsigned int chip_data = 0x00;
 
 	/* Set all register to initial value when probe driver to avoid register value was modified.
 	*/
@@ -286,26 +304,6 @@ static int et5904_i2c_probe(struct i2c_client *client,
 	}
 
 	dev_info(chip->dev, "et5904_i2c_probe Enter...\n");
-
-	cs_gpio = of_get_named_gpio(dev->of_node, "etek,cs-gpios", 0);
-	if (cs_gpio > 0) {
-		if (!gpio_is_valid(cs_gpio)) {
-			dev_err(dev, "Invalid chip select pin\n");
-			return -EPERM;
-		}
-
-		ret = devm_gpio_request_one(dev, cs_gpio, GPIOF_OUT_INIT_LOW,
-					    "et5904_cs_pin");
-		if (ret) {
-			dev_err(dev, "GPIO(%d) request failed(%d)\n",
-				cs_gpio, ret);
-			return ret;
-		}
-
-		chip->chip_cs_pin = cs_gpio;
-	}
-
-	dev_info(chip->dev, "et5904_i2c_probe cs_gpio:%d...\n", cs_gpio);
 
 	if (of_property_read_u32(dev->of_node, "etek,init-value", &value) < 0) {
 		dev_info(chip->dev, "et5904_i2c_probe no init_value, use default 0x0\n");
@@ -326,6 +324,41 @@ static int et5904_i2c_probe(struct i2c_client *client,
 			error);
 		return error;
 	}
+
+
+	ret = regmap_read(chip->regmap, ET5904_REG_CHIPID2, &chip_data);
+
+	dev_err(chip->dev, "0x19 data : %d\n", chip_data);
+
+	if (ret < 0) {
+		dev_err(chip->dev, "Failed to read DEVICE_ID reg: %d\n", ret);
+		return ret;
+	}
+
+	if(0x00 != chip_data){
+		dev_info(chip->dev, "This is no et5904 ic ,probe return\n");
+		return 0;
+	}
+
+	cs_gpio = of_get_named_gpio(dev->of_node, "etek,cs-gpios", 0);
+	if (cs_gpio > 0) {
+		if (!gpio_is_valid(cs_gpio)) {
+			dev_err(dev, "Invalid chip select pin\n");
+			return -EPERM;
+		}
+
+		ret = devm_gpio_request_one(dev, cs_gpio, GPIOF_OUT_INIT_LOW,
+					    "et5904_cs_pin");
+		if (ret) {
+			dev_err(dev, "GPIO(%d) request failed(%d)\n",
+				cs_gpio, ret);
+			return ret;
+		}
+
+		chip->chip_cs_pin = cs_gpio;
+	}
+
+	dev_info(chip->dev, "et5904_i2c_probe cs_gpio:%d...\n", cs_gpio);
 
 
 	for (i = 0; i < 5; i++) {
