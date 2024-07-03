@@ -68,64 +68,17 @@ struct aw37004_regulator {
 	struct device *dev;
 	struct regmap *regmap;
 	u32 en_gpiod;
-	u32 gh_vdd_id;
 	struct aw37004_reg_pdata reg_pdata[AW37004_MAX_REGULATORS];
 };
-
-static int aw37004_dt_get(struct aw37004_regulator *chip,
-				    const char *buf,
-				    bool enable)
-{
-	int ret;
-	struct device_node *np = chip->dev->of_node;
-
-//#ifdef VOUT_EN_USE_GPIO
-	chip->en_gpiod = of_get_named_gpio(np, "enable-gpio", 0);
-	if (!gpio_is_valid(chip->en_gpiod)) {
-		dev_err(chip->dev, "enable-gpio not specified\n");
-		return -EINVAL;
-	}
-
-	ret = gpio_request(chip->en_gpiod, "enable-gpio");
-	if (ret < 0) {
-		dev_err(chip->dev, "aw37004 enable-gpio request failed\n");
-		return ret;
-	}
-
-	if (enable)
-		gpio_direction_output(chip->en_gpiod, 1);
-	else
-		gpio_direction_output(chip->en_gpiod, 1);
-
-	chip->gh_vdd_id = of_get_named_gpio(np, "vdd1P8-gpio", 0);
-	if (!gpio_is_valid(chip->gh_vdd_id)) {
-		dev_err(chip->dev, "vdd1P8-gpio not specified\n");
-		return -EINVAL;
-	}
-
-	ret = gpio_request(chip->gh_vdd_id, "vdd1P8-gpio");
-	if (ret < 0) {
-		dev_err(chip->dev, "aw37004 vdd1P8-gpio request failed\n");
-		return ret;
-	}
-
-	if (enable)
-		gpio_direction_output(chip->gh_vdd_id, 1);
-	else
-		gpio_direction_output(chip->gh_vdd_id, 1);
-
-	return 0;
-//#endif
-}
 
 static int aw37004_regulator_enable(struct aw37004_regulator *chip,
 				    const char *buf,
 				    bool enable)
 {
-	int ret;
+	int ret, gpio_flag;
 
-#if 0
-	chip->en_gpiod = of_get_named_gpio(np, "enable-gpio", 0);
+
+	chip->en_gpiod = of_get_named_gpio(chip->dev->of_node, "enable-gpio", 0);
 	if (!gpio_is_valid(chip->en_gpiod)) {
 		dev_err(chip->dev, "enable-gpio not specified\n");
 		return -EINVAL;
@@ -137,13 +90,15 @@ static int aw37004_regulator_enable(struct aw37004_regulator *chip,
 		return ret;
 	}
 
-	if (enable)
-		gpio_direction_output(chip->en_gpiod, 1);
-	else
+	gpio_flag = of_property_read_bool(chip->dev->of_node,"enable-gpio-low");
+
+	if (gpio_flag)
 		gpio_direction_output(chip->en_gpiod, 0);
+	else
+		gpio_direction_output(chip->en_gpiod, 1);
 
 	return 0;
-#endif
+
 
 	if (strncmp(buf, "dvdd1", 5) == 0) {
 		if (enable)
@@ -417,6 +372,7 @@ static int aw37004_i2c_probe(struct i2c_client *client,
 
 	pr_info("aw37004 driver version is %s\n", AW37004_DRIVER_VERSION);
 
+	client->addr = 0x28;
 
 	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
 	if (!chip) {
@@ -439,11 +395,6 @@ static int aw37004_i2c_probe(struct i2c_client *client,
 
 	chip->regmap = regmap;
 	chip->dev = dev;
-
-	ret = aw37004_dt_get(chip, "all", 1);
-	if (ret)
-		dev_err(dev, "regulator enable gpio56 failed\n");
-
 	i2c_set_clientdata(client, chip);
 
 	ret = regmap_read(regmap, AW37004_REG_ID, &data);
