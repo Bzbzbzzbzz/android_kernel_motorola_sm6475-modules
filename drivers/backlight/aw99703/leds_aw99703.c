@@ -346,9 +346,14 @@ int  aw99703_set_brightness(struct aw99703_data *drvdata, int brt_val)
 
 	brt_val = aw99703_brightness_map(brt_val);
 
-	if((0 == drvdata->map_type) && (ALIGN_OLED == drvdata->led_current_align)) {
-		brt_val = align_convert[brt_val];
-		pr_info("%s align convert brt_val is %d\n", __func__, brt_val);
+	if (0 == drvdata->map_type) {
+		if(ALIGN_BL_MAPPING_450 == drvdata->led_current_align) {
+			brt_val = align_convert_450nit[brt_val];
+			pr_info("%s align 450nit convert brt_val is %d\n", __func__, brt_val);
+		} else if(ALIGN_BL_MAPPING_1000 == drvdata->led_current_align) {
+			brt_val = align_convert_1000nit[brt_val];
+			pr_info("%s align 1000nit convert brt_val is %d\n", __func__, brt_val);
+		}
 	}
 
 	if (brt_val > 0) {
