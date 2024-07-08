@@ -103,7 +103,8 @@ int ktd3136_brightness_table_reg5[256] = {0x00,0x06,0x0C,0x11,0x15,0x1A,0x1E,0x2
 
 enum backlight_exp_current_align {
 	ALIGN_NONE,
-	ALIGN_BL_MAPPING_450
+	ALIGN_BL_MAPPING_450,
+	ALIGN_BL_MAPPING_1000
 };
 
 struct ktd3136_data {
