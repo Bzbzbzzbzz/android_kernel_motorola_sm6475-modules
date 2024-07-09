@@ -996,7 +996,7 @@ static int __init gh_init(void)
 static void __exit gh_exit(void)
 {
 	pr_info("gh30x driver exit\n");
-	i2c_del_driver(&gh_i2c_driver);
+	return i2c_del_driver(&gh_i2c_driver);
 }
 
 #endif
