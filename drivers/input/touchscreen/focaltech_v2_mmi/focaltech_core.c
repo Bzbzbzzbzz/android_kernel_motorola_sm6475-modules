@@ -663,7 +663,15 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
 #ifdef FOCALTECH_PALM_SENSOR_EN
     int pd_state = 0;
 #endif
-
+#ifdef PICOLEAF_DATA_EN
+	int press = 0;
+	int press_notify = cypsoc_picoleaf_notification_enabled();
+        FTS_INFO("focal from pico press_notify data%d!", press_notify);
+	if (press_notify) {
+		cypsoc_picoleaf_get_press_z(&press);
+        FTS_INFO("focal from pico press data%d!", press);
+	}
+#endif
     ret = fts_read_touchdata(data);
     if (ret) {
         return ret;
@@ -734,8 +742,12 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
         events[i].flag = buf[FTS_TOUCH_EVENT_POS + base] >> 6;
         events[i].id = buf[FTS_TOUCH_ID_POS + base] >> 4;
         events[i].area = buf[FTS_TOUCH_AREA_POS + base] >> 4;
+#ifdef PICOLEAF_DATA_EN
+        events[i].p = press;//buf[FTS_TOUCH_PRE_POS + base];
+        FTS_INFO("events[0].p = (%d)", events[0].p);
+#else
         events[i].p =  buf[FTS_TOUCH_PRE_POS + base];
-
+#endif
         if (EVENT_DOWN(events[i].flag) && (data->point_num == 0)) {
             FTS_INFO("abnormal touch data from fw");
             return -EIO;
@@ -913,7 +925,11 @@ static int fts_input_init(struct fts_ts_data *ts_data)
     input_set_abs_params(input_dev, ABS_MT_POSITION_Y, pdata->y_min, pdata->y_max, 0, 0);
     input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR, 0, 0xFF, 0, 0);
 #if FTS_REPORT_PRESSURE_EN
+#ifdef PICOLEAF_DATA_EN
+    input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 0xFFFF, 0, 0);
+#else
     input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 0xFF, 0, 0);
+#endif
 #endif
 
     ret = input_register_device(input_dev);

@@ -16,3 +16,6 @@ clean:
 
 KBUILD_EXTRA_SYMBOLS += $(M)/../../../mmi_info/$(GKI_OBJ_MODULE_DIR)/Module.symvers
 KBUILD_EXTRA_SYMBOLS += $(M)/../touchscreen_mmi/$(GKI_OBJ_MODULE_DIR)/Module.symvers
+ifneq ($(filter m y, $(PICOLEAF_DATA_FOR_TOUCH)),)
+KBUILD_EXTRA_SYMBOLS += $(M)/../pt/$(GKI_OBJ_MODULE_DIR)/Module.symvers
+endif

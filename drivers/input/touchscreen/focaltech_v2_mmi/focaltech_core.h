@@ -69,6 +69,9 @@
 #ifdef FTS_USB_DETECT_EN
 #include <linux/power_supply.h>
 #endif
+#ifdef PICOLEAF_DATA_EN
+#include "../pt/cypsoc_picoleaf.h"
+#endif
 
 /*****************************************************************************
 * Private constant and macro definitions using #define
