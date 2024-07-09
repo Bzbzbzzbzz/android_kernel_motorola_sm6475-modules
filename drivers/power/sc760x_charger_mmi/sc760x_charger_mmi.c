@@ -1629,7 +1629,7 @@ static int sc760x_charger_get_chg_info(void *data, struct mmi_charger_info *chg_
 
 static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *config)
 {
-	int rc = 0, sc760x_ibat_limit_set = 0, ibat_limit_vote = 0, auto_bsm_dis = 0;
+	int rc = 0, sc760x_ibat_limit_set = 0, ibat_limit_vote = 0, auto_bsm_dis = 0, ls_off = -1;
 	u32 value;
 	bool chg_en;
 	bool cfg_changed = false;
@@ -1665,11 +1665,18 @@ static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *conf
 	}
 
 	if (chg->chg_cfg.target_fv > 0 && (chg->batt_info.batt_mv > chg->chg_cfg.target_fv)) {
-		sc760x_ibat_limit_set -= IBAT_CHG_LIM_BASE;
+		if ((sc760x_ibat_limit_set - IBAT_CHG_LIM_BASE) > 0)
+			sc760x_ibat_limit_set -= IBAT_CHG_LIM_BASE;
 		sc760x_set_ibat_limit(chg->sc, sc760x_ibat_limit_set);
 		pr_info("update new sc760x_ibat_limit_set %d, state.vbat_adc %d, batt_mv %d > chg->chg_cfg.target_fv %d\n",
 			sc760x_ibat_limit_set, state.vbat_adc / 1000, chg->batt_info.batt_mv, chg->chg_cfg.target_fv);
 	} else {
+
+		if ((is_usb_online(chg->sc) || is_wls_online(chg->sc)) &&
+			sc760x_ibat_limit_set == IBAT_CHG_LIM_BASE) {
+			sc760x_ibat_limit_set = chg->chg_cfg.target_fcc;
+			sc760x_set_ibat_limit(chg->sc, sc760x_ibat_limit_set);
+		}
 
 		ibat_limit_vote = MIN_VAL(chg->chg_cfg.target_fcc, chg->sc->thermal_fcc_ua / 1000);
 
@@ -1679,12 +1686,12 @@ static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *conf
 		ibat_limit_vote = MIN_VAL(chg->chg_cfg.target_fcc, chg->sc->thermal_fcc_ua / 1000);
 #endif
 
-		if (sc760x_ibat_limit_set > (ibat_limit_vote + IBAT_CHG_LIM_BASE)) {
+		if (sc760x_ibat_limit_set >= (ibat_limit_vote + IBAT_CHG_LIM_BASE)) {
 			sc760x_ibat_limit_set -= IBAT_CHG_LIM_BASE;
 			sc760x_set_ibat_limit(chg->sc, sc760x_ibat_limit_set);
 			pr_info("Devide to decrease ichg, update new sc760x_ibat_limit_set %d\n",
 				sc760x_ibat_limit_set);
-		} else if (sc760x_ibat_limit_set < (ibat_limit_vote - IBAT_CHG_LIM_BASE)) {
+		} else if (sc760x_ibat_limit_set <= (ibat_limit_vote - IBAT_CHG_LIM_BASE)) {
 			sc760x_ibat_limit_set += IBAT_CHG_LIM_BASE;
 			sc760x_set_ibat_limit(chg->sc, sc760x_ibat_limit_set);
 			pr_info("Devide to increase ichg, update new sc760x_ibat_limit_set %d\n",
@@ -1715,10 +1722,13 @@ static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *conf
 	if (config->charging_disable != chg->chg_cfg.charging_disable ||
 	    (chg_en == config->charging_disable && chg->sc->user_chg_en < 0)) {
 		value = config->charging_disable;
-		if (!value)
+		if (!value) {
 			rc = sc760x_enable_charger(chg->sc);
-		else
-			rc = sc760x_disable_charger(chg->sc);
+		} else {
+			if (is_usb_online(chg->sc) || is_wls_online(chg->sc)) {
+				rc = sc760x_disable_charger(chg->sc);
+			}
+		}
 		if (!rc) {
 			cfg_changed = true;
 			chg->chg_cfg.charging_disable = config->charging_disable;
@@ -1797,6 +1807,9 @@ static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *conf
                   gpio_set_value(chg->sc->sc760x_extmos_en_gpio, 0);
           }
 
+          sc760x_ibat_limit_set = IBAT_CHG_LIM_BASE;
+          sc760x_set_ibat_limit(chg->sc, sc760x_ibat_limit_set);
+
 	} else {
 
 	    rc = sc760x_set_auto_bsm_dis(chg->sc, true);
@@ -1814,9 +1827,10 @@ static int sc760x_charger_config_charge(void *data, struct mmi_charger_cfg *conf
       }
 
       sc760x_get_auto_bsm_dis(chg->sc, &auto_bsm_dis);
+      sc760x_get_load_switch(chg->sc, &ls_off);
 
-	pr_info("chg_en:%d, online %d, chg_st:%d, extmos_en %d, auto_bsm_dis %d\n",
-			chg_en, state.online, state.chrg_stat, chg->sc->sc760x_extmos_en, auto_bsm_dis);
+	pr_info("chg_en:%d, ls_off %d, online %d, chg_st:%d, extmos_en %d, auto_bsm_dis %d\n",
+			chg_en, ls_off, state.online, state.chrg_stat, chg->sc->sc760x_extmos_en, auto_bsm_dis);
 	sc760x_get_ibat_limit(chg->sc, &sc760x_ibat_limit_set);
 	pr_info("sc760x_ibat_limit_set %d, ibat_limit_vote %d, target_fcc %d, target_fv %d, thermal_fcc_ua %d\n",
 			sc760x_ibat_limit_set, ibat_limit_vote, chg->chg_cfg.target_fcc, chg->chg_cfg.target_fv, chg->sc->thermal_fcc_ua);
@@ -1892,7 +1906,7 @@ static void sc760x_charger_set_constraint(void *data,
 	}
 }
 
-#define DUAL_VBATT_DELTA_MV 200
+#define DUAL_VBATT_DELTA_MV 400
 #define DUAL_VBATT_DELTA_MAX_MV 500
 static void sc760x_paired_battery_notify(void *data,
 			struct mmi_battery_info *batt_info)
@@ -1938,8 +1952,10 @@ static void sc760x_paired_battery_notify(void *data,
 		pr_err("partner_fg_vbatt diff fg_vbatt, and delta value %d, max threshold %d, Does not turn on sc760x\n", DUAL_VBATT_DELTA_MV, DUAL_VBATT_DELTA_MV);
 		return;
 	} else {
-		if (chg->sc->user_gpio_en < 0)
+		if (chg->sc->user_gpio_en < 0) {
 			sc760x_enable_chip(chg->sc, true);
+			sc760x_set_ibat_limit(chg->sc, IBAT_CHG_LIM_BASE);
+		}
 		return;
 	}
 
