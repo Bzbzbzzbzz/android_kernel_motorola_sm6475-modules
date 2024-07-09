@@ -288,15 +288,6 @@ static void pt_get_mt_touches(struct pt_mt_data *md,
 	DECLARE_BITMAP(ids, 64);
 	int mt_sync_count = 0;
 	u8 *tch_addr;
-#ifdef CYPSOC_PICOLEAF_ENABLE
-	int press = 0;
-	int press_notify = cypsoc_picoleaf_notification_enabled(md->cypsoc_picoleaf_data);
-
-	if (press_notify) {
-		cypsoc_picoleaf_get_press_z(md->cypsoc_picoleaf_data, &press);
-	}
-#endif
-
 //	bitmap_zero(ids, si->tch_abs[PT_TCH_T].max);
 	bitmap_zero(ids, 64);
 	memset(tch->abs, 0, sizeof(tch->abs));
@@ -349,15 +340,6 @@ static void pt_get_mt_touches(struct pt_mt_data *md,
 
 		/* Process touch */
 		pt_mt_process_touch(md, tch);
-
-#ifdef CYPSOC_PICOLEAF_ENABLE
-		if (press_notify) {
-			// If PSoC is Broken:
-			//       A touch driver will notify (press=0x010000) to framework.
-			//       After that, framework turns off RakurakuTouch mode.
-			tch->abs[PT_TCH_P] = press;
-		}
-#endif
 
 		/* use 0 based track id's */
 		t -= md->t_min;

@@ -38,6 +38,8 @@ enum CYPSOC_DEBUG_LEVEL {
 	CDL_MAX
 };
 
+struct cypsoc_picoleaf_data *cpd_global;
+
 /*
  * Print out all debug prints that are less then or equal to set level.
  */
@@ -2593,6 +2595,8 @@ int cypsoc_picoleaf_probe_cont(struct cypsoc_picoleaf_data *cpd)
 	if(rc) goto err_probe;
 	dev_set_drvdata(cpd->dev, cpd);
 
+	cpd_global = cpd;
+
 	printk("cypsoc_picoleaf_probe() reached normal END\n");
 
 	return rc;
@@ -2704,27 +2708,27 @@ EXPORT_SYMBOL_GPL(cypsoc_picoleaf_i2c_readied);
  *	*cpd   - pointer to cypress PSoC core data
  *  *press - pointer to store the retrieved press Z
  ******************************************************************************/
-int cypsoc_picoleaf_get_press_z(struct cypsoc_picoleaf_data *cpd, int *press)
+int cypsoc_picoleaf_get_press_z(int *press)
 {
 	int rc;
-	if (!cpd){
+	if (!cpd_global){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		*press = CYPSOC_NOTIFY_FW_TO_RK_OFF;
 		return CYPSOC_PICOLEAF_RET_NG;
 	}
 
-	if(cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE){
+	if(cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE){
 		*press = CYPSOC_TEST_MODE_PRESS_Z;
 		rc = CYPSOC_PICOLEAF_RET_OK;
 	}else{
-		rc = _cypsoc_picoleaf_get_press_z(cpd, press);
+		rc = _cypsoc_picoleaf_get_press_z(cpd_global, press);
 	}
 
 	if (!rc){
 		if (*press > 0){
 			return rc;
 		} else if (*press == 0){
-			if(cpd->psoc_status != CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE)
+			if(cpd_global->psoc_status != CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE)
 				*press = CYPSOC_DEFAULT_PRESS_Z;
 		} else {
 			rc = CYPSOC_PICOLEAF_RET_NG;
@@ -2746,14 +2750,15 @@ EXPORT_SYMBOL_GPL(cypsoc_picoleaf_get_press_z);
  * PARAMETERS:
  *	*cpd  - pointer to cypress PSoC core data
  ******************************************************************************/
-int cypsoc_picoleaf_notification_enabled(struct cypsoc_picoleaf_data *cpd){
-	if (!cpd){
+int cypsoc_picoleaf_notification_enabled(void){
+
+	if (!cpd_global){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		return CYPSOC_PICOLEAF_RET_NG;
 	}
-	return cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE ||
-			cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_RAISE_ERROR ||
-			cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE;
+	return cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE ||
+			cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_RAISE_ERROR ||
+			cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE;
 }
 EXPORT_SYMBOL_GPL(cypsoc_picoleaf_notification_enabled);
 
@@ -2775,7 +2780,7 @@ int cypsoc_picoleaf_firmware_update(struct cypsoc_picoleaf_data *cpd){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		return CYPSOC_PICOLEAF_RET_NG;
 	}
-	return _cypsoc_picoleaf_firmware_update(cpd, 0);
+	return _cypsoc_picoleaf_firmware_update(cpd, 1);
 }
 EXPORT_SYMBOL_GPL(cypsoc_picoleaf_firmware_update);
 

@@ -409,6 +409,7 @@ static int pt_cypsoc_picoleaf_i2c_probe(struct i2c_client *client, const struct 
 		}
 		pr_err("LSY06 \n");
 		i2c_clients_pt_cypsoc[1] = client;
+		cypsoc_picoleaf_firmware_update(cpd);
 	}else if(!strncmp(i2c_id->name, PT_I2C_NAME, strlen(PT_I2C_NAME))){
 		rc = pt_i2c_probe(client, i2c_id);
 		if(rc) {
