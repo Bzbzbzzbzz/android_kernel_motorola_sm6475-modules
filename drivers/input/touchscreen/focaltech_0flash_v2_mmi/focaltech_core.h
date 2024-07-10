@@ -301,6 +301,10 @@ struct fts_ts_data {
 #if defined(CONFIG_INPUT_TOUCHSCREEN_MMI)
 	struct ts_mmi_class_methods *imports;
 #endif
+
+#if defined(CONFIG_FTS_DOUBLE_TAP_CONTROL)
+	u8 gesture_cmd;
+#endif
 };
 
 #ifdef FTS_SET_TOUCH_STATE

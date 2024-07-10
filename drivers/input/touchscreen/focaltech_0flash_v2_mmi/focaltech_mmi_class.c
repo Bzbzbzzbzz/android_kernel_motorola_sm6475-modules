@@ -195,19 +195,17 @@ static int fts_mmi_charger_mode(struct device *dev, int mode)
 static int fts_mmi_panel_state(struct device *dev,
 	enum ts_mmi_pm_mode from, enum ts_mmi_pm_mode to)
 {
-	struct fts_ts_data *ts_data;
+	struct fts_ts_data *ts_data = fts_data;
 
 #if defined(CONFIG_FTS_DOUBLE_TAP_CONTROL)
 	unsigned char gesture_type = 0;
-	u8 gesture_command = 0;
 #endif
 
-	GET_TS_DATA(dev);
 	FTS_INFO("panel state change: %d->%d\n", from, to);
 	switch (to) {
 		case TS_MMI_PM_GESTURE:
 #ifdef FTS_SET_TOUCH_STATE
-			fts_data->gesture_support = true;
+			ts_data->gesture_support = true;
 			touch_set_state(TS_MMI_PM_GESTURE, TOUCH_PANEL_IDX_PRIMARY);
 #else
 			fts_data->gesture_support = false;
@@ -219,17 +217,14 @@ static int fts_mmi_panel_state(struct device *dev,
 			}
 
 			if (gesture_type & TS_MMI_GESTURE_SINGLE) {
-				gesture_command += 0x01;
-				FTS_INFO("enable single gesture mode cmd 0x%04x\n", gesture_command);
+				ts_data->gesture_cmd += 0x01;
+				FTS_INFO("enable single gesture mode cmd 0x%04x\n", ts_data->gesture_cmd);
 			}
 
 			if (gesture_type & TS_MMI_GESTURE_DOUBLE) {
-				gesture_command += 0x02;
-				FTS_INFO("enable double gesture mode cmd 0x%04x\n", gesture_command);
+				ts_data->gesture_cmd += 0x02;
+				FTS_INFO("enable double gesture mode cmd 0x%04x\n", ts_data->gesture_cmd);
 			}
-
-			fts_write_reg(FTS_GESTURE_MODE, gesture_command);
-			gesture_command = 0;
 #endif
 			break;
 
@@ -238,7 +233,6 @@ static int fts_mmi_panel_state(struct device *dev,
 #ifdef FTS_SET_TOUCH_STATE
 			touch_set_state(TS_MMI_PM_DEEPSLEEP, TOUCH_PANEL_IDX_PRIMARY);
 #endif
-			fts_write_reg(FTS_REG_POWER_MODE, FTS_REG_POWER_MODE_SLEEP);
 
 			break;
 
@@ -337,6 +331,10 @@ static int fts_mmi_post_suspend(struct device *dev)
 
 #if FTS_GESTURE_EN
 	if (fts_gesture_suspend(ts_data) == 0) {
+#if defined(CONFIG_FTS_DOUBLE_TAP_CONTROL)
+		fts_write_reg(FTS_GESTURE_MODE, ts_data->gesture_cmd);
+		ts_data->gesture_cmd = 0;
+#endif
 		ts_data->suspended = true;
 		return 0;
 	}
