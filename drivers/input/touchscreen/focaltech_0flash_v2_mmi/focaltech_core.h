@@ -131,6 +131,9 @@
 
 #define FTS_REG_RETRY_TIMES                 5
 
+#define FTS_TOUCH_HIRES_X                   4
+#define FTS_HI_RES_X_MAX                    16
+
 /*****************************************************************************
 * Private enumerations, structures and unions using typedef
 *****************************************************************************/
@@ -305,6 +308,8 @@ struct fts_ts_data {
 #if defined(CONFIG_FTS_DOUBLE_TAP_CONTROL)
 	u8 gesture_cmd;
 #endif
+
+    u32 high_resolution_num;
 };
 
 #ifdef FTS_SET_TOUCH_STATE
@@ -331,6 +336,7 @@ enum _FTS_TOUCH_ETYPE {
     TOUCH_EVENT_NUM = 0x02,
     TOUCH_EXTRA_MSG = 0x08,
     TOUCH_PEN = 0x0B,
+    TOUCH_DEFAULT_HI_RES = 0x82,
     TOUCH_GESTURE = 0x80,
     TOUCH_FW_INIT = 0x81,
     TOUCH_IGNORE = 0xFE,

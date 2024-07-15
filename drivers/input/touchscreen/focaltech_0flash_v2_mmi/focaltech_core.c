@@ -537,7 +537,9 @@ static int fts_input_report_b(struct fts_ts_data *ts_data, struct ts_event *even
             input_mt_slot(input_dev, events[i].id);
             input_mt_report_slot_state(input_dev, MT_TOOL_FINGER, true);
 #if FTS_REPORT_PRESSURE_EN
-            input_report_abs(input_dev, ABS_MT_PRESSURE, events[i].p);
+            if(fts_data->high_resolution_num == 1){
+                input_report_abs(input_dev, ABS_MT_PRESSURE, events[i].p);
+            }
 #endif
             input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, events[i].area);
             input_report_abs(input_dev, ABS_MT_POSITION_X, events[i].x);
@@ -789,6 +791,12 @@ static int fts_read_parse_touchdata(struct fts_ts_data *ts_data, u8 *touch_buf)
         return TOUCH_FW_INIT;
     }
 
+	if(fts_data->high_resolution_num == 4){
+	    if (TOUCH_DEFAULT == ((touch_buf[FTS_TOUCH_E_NUM] >> 4) & 0x0F)) {
+	        return TOUCH_DEFAULT_HI_RES;
+	    }
+	}
+
     return ((touch_buf[FTS_TOUCH_E_NUM] >> 4) & 0x0F);
 }
 
@@ -916,6 +924,61 @@ static int fts_irq_read_report(struct fts_ts_data *ts_data)
         mutex_unlock(&ts_data->report_mutex);
         break;
 #endif
+
+    case TOUCH_DEFAULT_HI_RES:
+        if(fts_data->high_resolution_num == 4){
+            finger_num = touch_buf[FTS_TOUCH_E_NUM] & 0x0F;
+            if (finger_num > max_touch_num) {
+                FTS_ERROR("invalid point_num(%d)", finger_num);
+                return -EIO;
+            }
+
+            for (i = 0; i < max_touch_num; i++) {
+                base = FTS_ONE_TCH_LEN * i + 2;
+                pointid = (touch_buf[FTS_TOUCH_OFF_ID_YH + base]) >> 4;
+                if (pointid >= FTS_MAX_ID)
+                    break;
+                else if (pointid >= max_touch_num) {
+                    FTS_ERROR("ID(%d) beyond max_touch_number", pointid);
+                    return -EINVAL;
+                }
+
+                events[i].id = pointid;
+                events[i].flag = touch_buf[FTS_TOUCH_OFF_E_XH + base] >> 6;
+                events[i].x = ((touch_buf[FTS_TOUCH_OFF_E_XH + base] & 0x0F) << 12) \
+                            + ((touch_buf[FTS_TOUCH_OFF_XL + base] & 0xFF) << 4) \
+                            + ((touch_buf[FTS_TOUCH_OFF_PRE + base] >> 4) & 0x0F);
+                events[i].y = ((touch_buf[FTS_TOUCH_OFF_ID_YH + base] & 0x0F) << 12) \
+                            + ((touch_buf[FTS_TOUCH_OFF_YL + base] & 0xFF) << 4) \
+                            + (touch_buf[FTS_TOUCH_OFF_PRE + base] & 0x0F);
+                events[i].x = (events[i].x * FTS_TOUCH_HIRES_X ) / FTS_HI_RES_X_MAX;
+                events[i].y = (events[i].y * FTS_TOUCH_HIRES_X ) / FTS_HI_RES_X_MAX;
+                events[i].p =  touch_buf[FTS_TOUCH_OFF_PRE + base];
+                if (events[i].p <= 0) events[i].p = 0x3F;
+                events[i].area = touch_buf[FTS_TOUCH_OFF_AREA + base];
+                if (events[i].area <= 0) events[i].area = 0x09;
+                event_num++;
+                if (EVENT_DOWN(events[i].flag) && (finger_num == 0)) {
+                    FTS_INFO("abnormal touch data from fw");
+                    return -EIO;
+                }
+            }
+
+            if (event_num == 0) {
+                FTS_INFO("no touch point information(%02x)", touch_buf[2]);
+                return -EIO;
+            }
+            ts_data->touch_event_num = event_num;
+
+            mutex_lock(&ts_data->report_mutex);
+#if FTS_MT_PROTOCOL_B_EN
+            fts_input_report_b(ts_data, events);
+#else
+            fts_input_report_a(ts_data, events);
+#endif
+            mutex_unlock(&ts_data->report_mutex);
+        }
+	break;
 
     case TOUCH_EVENT_NUM:
         event_num = touch_buf[FTS_TOUCH_E_NUM] & 0x0F;
@@ -1162,7 +1225,9 @@ static int fts_input_init(struct fts_ts_data *ts_data)
     input_set_abs_params(input_dev, ABS_MT_POSITION_Y, pdata->y_min, pdata->y_max, 0, 0);
     input_set_abs_params(input_dev, ABS_MT_TOUCH_MAJOR, 0, 0xFF, 0, 0);
 #if FTS_REPORT_PRESSURE_EN
-    input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 0xFF, 0, 0);
+    if(fts_data->high_resolution_num == 1){
+        input_set_abs_params(input_dev, ABS_MT_PRESSURE, 0, 0xFF, 0, 0);
+    }
 #endif
 
     ret = input_register_device(input_dev);
@@ -1550,6 +1615,7 @@ static int fts_get_dt_coords(struct device *dev, char *name,
         pdata->y_max = FTS_Y_MAX_DISPLAY_DEFAULT;
         return -ENODATA;
     } else {
+        FTS_INFO("x_min = %d,y_min = %d, x_max = %d, y_max = %d", coords[0], coords[1], coords[2], coords[3]);
         pdata->x_min = coords[0];
         pdata->y_min = coords[1];
         pdata->x_max = coords[2];
@@ -1647,6 +1713,15 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
 	} else {
 		FTS_INFO("panel supplier is %s", (char *)fts_data->panel_supplier);
 	}
+
+    ret = of_property_read_u32(np, "focaltech,high-resolution", &temp_val);
+    if(ret < 0){
+        FTS_ERROR("Unable to get focaltech,high-resolution");
+        fts_data->high_resolution_num = 1;
+    }else {
+        fts_data->high_resolution_num = temp_val;
+        FTS_INFO("high_resolution_num = %d", fts_data->high_resolution_num);
+    }
     FTS_FUNC_EXIT();
     return 0;
 }
