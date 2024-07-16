@@ -55,22 +55,22 @@ enum{
 
 #define STK_CADC_DIFF                       30
 
-#define STK_COEF_T_POS_PH0                  128    //follow by STK_ADDR_CORRECTION_PH0 [17:08]
-#define STK_COEF_T_NEG_PH0                  128    //follow by STK_ADDR_CORRECTION_PH0 [29:20]
-#define STK_COEF_T_POS_PH1                  121    //follow by STK_ADDR_CORRECTION_PH1 [17:08]
-#define STK_COEF_T_NEG_PH1                  125    //follow by STK_ADDR_CORRECTION_PH1 [29:20]
-#define STK_COEF_T_POS_PH2                  112    //follow by STK_ADDR_CORRECTION_PH2 [17:08]
-#define STK_COEF_T_NEG_PH2                  162    //follow by STK_ADDR_CORRECTION_PH2 [29:20]
-#define STK_COEF_T_POS_PH3                  128    //follow by STK_ADDR_CORRECTION_PH3 [17:08]
-#define STK_COEF_T_NEG_PH3                  128    //follow by STK_ADDR_CORRECTION_PH3 [29:20]
-#define STK_COEF_T_POS_PH4                  171    //follow by STK_ADDR_CORRECTION_PH4 [17:08]
-#define STK_COEF_T_NEG_PH4                  215    //follow by STK_ADDR_CORRECTION_PH4 [29:20]
-#define STK_COEF_T_POS_PH5                  134    //follow by STK_ADDR_CORRECTION_PH5 [17:08]
-#define STK_COEF_T_NEG_PH5                  176    //follow by STK_ADDR_CORRECTION_PH5 [29:20]
-#define STK_COEF_T_POS_PH6                  190    //follow by STK_ADDR_CORRECTION_PH6 [17:08]
-#define STK_COEF_T_NEG_PH6                  244    //follow by STK_ADDR_CORRECTION_PH6 [29:20]
-#define STK_COEF_T_POS_PH7                  128    //follow by STK_ADDR_CORRECTION_PH7 [17:08]
-#define STK_COEF_T_NEG_PH7                  128    //follow by STK_ADDR_CORRECTION_PH7 [29:20]
+#define STK_COEF_T_POS_PH0 (pdata?pdata->coef_t[0]:128) // follow by STK_ADDR_CORRECTION_PH0 [17:08]
+#define STK_COEF_T_NEG_PH0 (pdata?pdata->coef_t[1]:128) // follow by STK_ADDR_CORRECTION_PH0 [29:20]
+#define STK_COEF_T_POS_PH1 (pdata?pdata->coef_t[2]:132) // follow by STK_ADDR_CORRECTION_PH1 [17:08]
+#define STK_COEF_T_NEG_PH1 (pdata?pdata->coef_t[3]:131) // follow by STK_ADDR_CORRECTION_PH1 [29:20]
+#define STK_COEF_T_POS_PH2 (pdata?pdata->coef_t[4]:133) // follow by STK_ADDR_CORRECTION_PH2 [17:08]
+#define STK_COEF_T_NEG_PH2 (pdata?pdata->coef_t[5]:130) // follow by STK_ADDR_CORRECTION_PH2 [29:20]
+#define STK_COEF_T_POS_PH3 (pdata?pdata->coef_t[6]:128) // follow by STK_ADDR_CORRECTION_PH3 [17:08]
+#define STK_COEF_T_NEG_PH3 (pdata?pdata->coef_t[7]:128) // follow by STK_ADDR_CORRECTION_PH3 [29:20]
+#define STK_COEF_T_POS_PH4 (pdata?pdata->coef_t[8]:188) // follow by STK_ADDR_CORRECTION_PH4 [17:08]
+#define STK_COEF_T_NEG_PH4 (pdata?pdata->coef_t[9]:205) // follow by STK_ADDR_CORRECTION_PH4 [29:20]
+#define STK_COEF_T_POS_PH5 (pdata?pdata->coef_t[10]:136) // follow by STK_ADDR_CORRECTION_PH5 [17:08]
+#define STK_COEF_T_NEG_PH5 (pdata?pdata->coef_t[11]:156) // follow by STK_ADDR_CORRECTION_PH5 [29:20]
+#define STK_COEF_T_POS_PH6 (pdata?pdata->coef_t[12]:201) // follow by STK_ADDR_CORRECTION_PH6 [17:08]
+#define STK_COEF_T_NEG_PH6 (pdata?pdata->coef_t[13]:228) // follow by STK_ADDR_CORRECTION_PH6 [29:20]
+#define STK_COEF_T_POS_PH7 (pdata?pdata->coef_t[14]:128) // follow by STK_ADDR_CORRECTION_PH7 [17:08]
+#define STK_COEF_T_NEG_PH7 (pdata?pdata->coef_t[15]:128) // follow by STK_ADDR_CORRECTION_PH7 [29:20]
 
 #define STK501XX_ID                         0x6503
 
@@ -585,6 +585,7 @@ struct stk501xx_platform_data
     u32 mapping_phase[8];
     u32 sar_thd0[8];
     u32 sar_thd1[8];
+    u32 coef_t[16];
     u32 tc_config[9];
 };
 
@@ -601,6 +602,7 @@ struct stk_data
     uint8_t                         recv;
     stk_sar_nearby_type             last_nearby[8];
     stk_sar_nearby_type             last_nearby_dist1[8];
+    uint16_t                        dist_phase;
 #ifdef MCU_GESTURE
     GestureType                     gesture_state;
     bool                            gs_timer_is_running;
@@ -648,7 +650,7 @@ struct stk_data
 void stk501xx_set_enable(struct stk_data* stk, char enable);
 int32_t stk_read_prox_flag(struct stk_data* stk, uint32_t* prox_flag);
 void stk501xx_read_temp_data(struct stk_data* stk, uint16_t reg, int32_t *temperature);
-void stk501xx_read_sar_data(struct stk_data* stk, uint32_t prox_flag);
+void stk501xx_read_sar_data(struct stk_data* stk, uint32_t prox_flag, uint16_t dist_phase);
 int32_t stk501xx_show_all_reg(struct stk_data* stk);
 int32_t stk501xx_init_client(struct stk_data *stk);
 int32_t stk501xx_sw_reset(struct stk_data* stk);

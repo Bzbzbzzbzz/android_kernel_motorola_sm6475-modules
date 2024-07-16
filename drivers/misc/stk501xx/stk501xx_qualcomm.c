@@ -111,7 +111,7 @@ static ssize_t stk_value_show(struct device *dev,
     STK_ERR("stk_value_show");
     //read prox flag
     stk_read_prox_flag(stk, &prox_flag);
-    stk501xx_read_sar_data(stk, prox_flag);
+    stk501xx_read_sar_data(stk, prox_flag, stk->dist_phase);
 
     for (i = 0; i < 8; i++)
     {
@@ -132,7 +132,7 @@ static ssize_t stk_flag_show(struct device *dev,
     STK_ERR("stk_flag_show");
     //read prox flag
     stk_read_prox_flag(stk, &prox_flag);
-    stk501xx_read_sar_data(stk, prox_flag);
+    stk501xx_read_sar_data(stk, prox_flag, stk->dist_phase);
 
     for ( i = 0; i < 8; i++)
     {
@@ -337,7 +337,7 @@ static ssize_t class_stk_value_show(struct class *class,
     STK_ERR("stk_value_show");
     //read prox flag
     stk_read_prox_flag(global_stk, &prox_flag);
-    stk501xx_read_sar_data(global_stk, prox_flag);
+    stk501xx_read_sar_data(global_stk, prox_flag, global_stk->dist_phase);
 
     for (i = 0; i < 8; i++)
     {
@@ -356,7 +356,7 @@ static ssize_t class_stk_flag_show(struct class *class,
     STK_ERR("stk_flag_show");
     //read prox flag
     stk_read_prox_flag(global_stk, &prox_flag);
-    stk501xx_read_sar_data(global_stk, prox_flag);
+    stk501xx_read_sar_data(global_stk, prox_flag, global_stk->dist_phase);
 
     for ( i = 0; i < 8; i++)
     {
@@ -806,20 +806,29 @@ void stk_report_sar_data(struct stk_data* stk)
         is_dist1_change |= stk->state_change_dist1[mapping_phase[i]];
         STK_ERR("stk_report_sar_data:: change ph[%d] =%d[%d],(%d)", mapping_phase[i], stk->state_change[mapping_phase[i]], stk->state_change_dist1[mapping_phase[i]], is_change);
 
-        if (STK_SAR_NEAR_BY == stk->last_nearby_dist1[mapping_phase[i]])
-            nf_flag = 1;  // First thd
+        if (STK_SAR_NEAR_BY == stk->last_nearby[mapping_phase[i]])
+        {
+            if (((stk->dist_phase & 0x07) == mapping_phase[i]) || (((stk->dist_phase & 0x70) >> 4) == mapping_phase[i]))
+            {
+                nf_flag = 1; // 1st thd
+            }
+            else
+            {
+                nf_flag = 2; // Second thd
+            }
+        }
 
-        if (is_dist1_change != 0)
+        if (is_change != 0)
         {
             input_report_abs(stk_wrapper->channels[i].input_dev, ABS_DISTANCE, nf_flag);
             input_sync(stk_wrapper->channels[i].input_dev);
             STK_ERR("stk_report_sar_data, ph[%d] nf_flag =%d\n",  mapping_phase[i], nf_flag);
         }
 
-        if (STK_SAR_NEAR_BY == stk->last_nearby[mapping_phase[i]])
-            nf_flag = 2; // Second thd
+        if (STK_SAR_NEAR_BY == stk->last_nearby_dist1[mapping_phase[i]])
+            nf_flag = 2;  // 2nd thd
 
-        if (is_change != 0)
+        if (is_dist1_change != 0)
         {
             input_report_abs(stk_wrapper->channels[i].input_dev, ABS_DISTANCE, nf_flag);
             input_sync(stk_wrapper->channels[i].input_dev);
@@ -868,6 +877,7 @@ static int stk_parse_dt(struct device *dev,
     of_property_read_u32_array(np,"stk,mapping_phase", (u32*)&(pdata->mapping_phase[0]), 8);
     of_property_read_u32_array(np,"stk,sar_thd0", (u32*)&(pdata->sar_thd0[0]), 8);
     of_property_read_u32_array(np,"stk,sar_thd1", (u32*)&(pdata->sar_thd1[0]), 8);
+    of_property_read_u32_array(np,"stk,coef_t", (u32*)&(pdata->coef_t[0]), 16);
     of_property_read_u32_array(np,"stk,tc_config", (u32*)&(pdata->tc_config[0]), 9);
     // load in registers from device tree
     of_property_read_u32(np,"stk,reg-num",&pdata->i2c_reg_num);
@@ -955,6 +965,7 @@ static int get_platform_data(stk501xx_wrapper *stk_wrapper)
     STK_LOG("mapping_phase %d - %d\n", pdata->mapping_phase[0], pdata->mapping_phase[7]);
     STK_LOG("sar_thd0 %d - %d\n", pdata->sar_thd0[0], pdata->sar_thd0[7]);
     STK_LOG("sar_thd1 %d - %d\n", pdata->sar_thd1[0], pdata->sar_thd1[7]);
+    STK_LOG("coef_t %d - %d\n", pdata->coef_t[0], pdata->coef_t[15]);
     STK_LOG("tc_config %d - %d\n", pdata->tc_config[0], pdata->tc_config[8]);
     return 0;
 }

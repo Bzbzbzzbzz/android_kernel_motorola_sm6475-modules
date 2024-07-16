@@ -315,6 +315,7 @@ void disable_conv_check(struct stk_data *stk, bool first_boot)
 void temperature_compensation(struct stk_data *stk, uint32_t int_flag, uint16_t prox_flag)
 {
     uint32_t delta_des = 0, val = 0;
+    struct stk501xx_platform_data   *pdata = stk->pdata;
 
     if (int_flag & STK_IRQ_SOURCE_FAR_IRQ_MASK)
     {
@@ -540,6 +541,7 @@ void stk501xx_update_startup(struct stk_data* stk)
     uint32_t raw_data[4] = {0};  // 0=ref_0, 1=measure_0, 2=ref_1, 3=measure_1
     uint32_t val = 0;
     int32_t raw_diff, temp_adjust;
+    struct stk501xx_platform_data   *pdata = stk->pdata;
 
     //dis conv done
     STK_REG_READ(stk, STK_ADDR_IRQ_SOURCE_ENABLE_REG, (uint8_t*)&val);
@@ -650,7 +652,7 @@ static uint8_t stk501xx_check_thd(struct stk_data* stk, uint32_t sar_thd, int8_t
     STK_REG_READ(stk, reg, (uint8_t*)&val);
     val &= 0xFFFFFFF8;
     val |= deno;
-    STK_LOG("ph%d,reg =0x%x, denominator =%d, ready set val = %d\n", idx, reg, deno, set_val);
+    STK_LOG("ph%d,reg =0x%x, denominator =%d, ready set val = %d(%d)\n", idx, reg, deno, set_val, sar_thd);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     return set_val;
@@ -661,6 +663,7 @@ static int8_t stk501xx_set_thd(struct stk_data* stk)
     uint16_t reg;
     int8_t denominator = 0;
     uint32_t val = 0, val_dist1 = 0;
+    struct stk501xx_platform_data   *pdata = stk->pdata;
     STK_LOG("stk_sar_set_thd");
 
     //set threshold gain
@@ -680,7 +683,9 @@ static int8_t stk501xx_set_thd(struct stk_data* stk)
     //PH0 threshold
     reg = STK_ADDR_PROX_CTRL0_PH0;
     val = stk501xx_check_thd(stk, STK_SAR_THD_0, denominator, 0);
-
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_0, denominator, 0);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH1 threshold
@@ -688,7 +693,6 @@ static int8_t stk501xx_set_thd(struct stk_data* stk)
     val = stk501xx_check_thd(stk, STK_SAR_THD_1, denominator, 1);
     //assign dist1 thd
     val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_1, denominator, 1);
-
     val|= (val_dist1 << 8);
 
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
@@ -696,40 +700,49 @@ static int8_t stk501xx_set_thd(struct stk_data* stk)
     reg = STK_ADDR_PROX_CTRL0_PH2;
     val = stk501xx_check_thd(stk, STK_SAR_THD_2, denominator, 2);
 
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_2, denominator, 2);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH3 threshold
     reg = STK_ADDR_PROX_CTRL0_PH3;
     val = stk501xx_check_thd(stk, STK_SAR_THD_3, denominator, 3);
-
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_3, denominator, 3);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH4 threshold
     reg = STK_ADDR_PROX_CTRL0_PH4;
     val = stk501xx_check_thd(stk, STK_SAR_THD_4, denominator, 4);
-
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_4, denominator, 4);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH5 threshold
     reg = STK_ADDR_PROX_CTRL0_PH5;
     val = stk501xx_check_thd(stk, STK_SAR_THD_5, denominator, 5);
     //assign dist1 thd
-    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_5, denominator, 1);
-
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_5, denominator, 5);
     val|= (val_dist1 << 8);
-
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH6 threshold
     reg = STK_ADDR_PROX_CTRL0_PH6;
     val = stk501xx_check_thd(stk, STK_SAR_THD_6, denominator, 6);
-
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_6, denominator, 6);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
     //PH7 threshold
     reg = STK_ADDR_PROX_CTRL0_PH7;
     val = stk501xx_check_thd(stk, STK_SAR_THD_7, denominator, 7);
-
+    //assign dist1 thd
+    val_dist1 = stk501xx_check_thd(stk, STK_SAR_THD1_7, denominator, 7);
+    val|= (val_dist1 << 8);
     STK_REG_WRITE(stk, reg, (uint8_t*)&val);
     return 0;
 }
@@ -889,7 +902,31 @@ void stk501xx_read_temp_data(struct stk_data* stk, uint16_t reg, int32_t *temper
     *temperature = output_data;
     STK_ERR("stk501xx_read_temp_data:: temp = %d(0x%X)", output_data, val);
 }
-void stk501xx_read_sar_data(struct stk_data* stk , uint32_t prox_flag)
+
+static uint16_t stk501xx_read_dist_phase(struct stk_data* stk)
+{
+    uint32_t val = 0;
+    uint16_t ret_val = 0; //[15:12] Custom D : [11:8] Custom C : [7:4] Custom B : [3:0] Custom A
+
+    STK_REG_READ(stk, STK_ADDR_CUSTOM_A_CTRL0, (uint8_t*)&val);
+
+    STK_ERR("stk501xx_read_dist_phase = [0x%x] = 0x%x\n", STK_ADDR_CUSTOM_A_CTRL0, val);
+
+    ret_val = ((val >> 4) & 0x07);
+
+    STK_REG_READ(stk, STK_ADDR_CUSTOM_B_CTRL0, (uint8_t*)&val);
+
+    STK_ERR("stk501xx_read_dist_phase = [0x%x] = 0x%x\n", STK_ADDR_CUSTOM_B_CTRL0, val);
+
+    ret_val |= (((val >> 4) & 0x07) << 4);
+
+
+    STK_ERR("stk501xx_read_dist_phase =0x%x\n", ret_val);
+    return ret_val;
+}
+
+
+void stk501xx_read_sar_data(struct stk_data* stk, uint32_t prox_flag, uint16_t dist_phase)
 {
     uint16_t reg;
     uint32_t raw_val[8], delta_val[8], cadc_val[8];
@@ -995,29 +1032,33 @@ void stk501xx_read_sar_data(struct stk_data* stk , uint32_t prox_flag)
         }
         //dist1_flag
         stk_read_detect_dist_flag(stk, &dist1_flag);
-        STK_ERR("stk501xx_read_sar_data:: dist1_flag = 0x%x", dist1_flag);
-        if (dist1_flag & (uint32_t)((1 << i) << 8) ) //near
+        STK_ERR("stk501xx_read_sar_data:: dist1_flag = 0x%x, dist_phase =0x%x\n",
+                            dist1_flag, dist_phase);
+        if( ((dist_phase & 0x07) == i) || (((dist_phase & 0x70) >> 4) == i))
         {
-            if (STK_SAR_NEAR_BY != stk->last_nearby_dist1[i])
+            if (dist1_flag & (uint32_t)(1 << i)) // near //0712 add
             {
-                stk->state_change_dist1[i] = 1;
-                stk->last_nearby_dist1[i] = STK_SAR_NEAR_BY;
+                if (STK_SAR_NEAR_BY != stk->last_nearby_dist1[i])
+                {
+                    stk->state_change_dist1[i] = 1;
+                    stk->last_nearby_dist1[i] = STK_SAR_NEAR_BY;
+                }
+                else
+                {
+                    stk->state_change_dist1[i] = 0;
+                }
             }
-            else
+            else //far
             {
-                stk->state_change_dist1[i] = 0;
-            }
-        }
-        else //far
-        {
-            if (STK_SAR_FAR_AWAY != stk->last_nearby_dist1[i])
-            {
-                stk->state_change_dist1[i] = 1;
-                stk->last_nearby_dist1[i] = STK_SAR_FAR_AWAY;
-            }
-            else
-            {
-                stk->state_change_dist1[i] = 0;
+                if (STK_SAR_FAR_AWAY != stk->last_nearby_dist1[i])
+                {
+                    stk->state_change_dist1[i] = 1;
+                    stk->last_nearby_dist1[i] = STK_SAR_FAR_AWAY;
+                }
+                else
+                {
+                    stk->state_change_dist1[i] = 0;
+                }
             }
         }
     }
@@ -1176,6 +1217,14 @@ int32_t stk501xx_show_all_reg(struct stk_data* stk)
 		STK_ADDR_SENS_CTRL_PH6,
 		STK_ADDR_CORRECTION_PH6,
 		
+            // 20240702 stk modify
+            STK_ADDR_FILT_CFG_PH0,
+            STK_ADDR_FILT_CFG_PH1,
+            STK_ADDR_FILT_CFG_PH2,
+            STK_ADDR_FILT_CFG_PH3,
+            STK_ADDR_FILT_CFG_PH4,
+            STK_ADDR_FILT_CFG_PH5,
+            STK_ADDR_FILT_CFG_PH6,
     };
     reg_num = sizeof(reg_array) / sizeof(uint16_t);
     STK_ERR("stk501xx_show_all_reg::");
@@ -1267,6 +1316,9 @@ static int32_t stk_reg_init(struct stk_data* stk)
     // set power down for default
     stk501xx_set_enable(stk, 0);
     stk501xx_set_thd(stk);
+
+    stk->dist_phase = stk501xx_read_dist_phase(stk);
+
     return 0;
 }
 
@@ -1428,10 +1480,16 @@ void stk_work_queue(void *stkdata)
 #ifdef TEMP_COMPENSATION
     temperature_compensation(stk, flag, (uint16_t)(prox_flag >> 8));
 #endif
-    stk501xx_read_sar_data(stk , prox_flag);
 
+    stk_read_prox_flag(stk, &prox_flag);
+    stk501xx_read_sar_data(stk, prox_flag, stk->dist_phase);
+#ifdef STK_INTERRUPT_MODE//0712 add
     if (flag & STK_IRQ_SOURCE_FAR_IRQ_MASK ||
-        flag & STK_IRQ_SOURCE_CLOSE_IRQ_MASK)
+        flag & STK_IRQ_SOURCE_CLOSE_IRQ_MASK ||
+        flag & STK_IRQ_SOURCE_CUST_A_IRQ_MASK ||
+        flag & STK_IRQ_SOURCE_CUST_B_IRQ_MASK
+        )
+#endif//0712 add
     {
         STK501XX_SAR_REPORT(stk);
     }
