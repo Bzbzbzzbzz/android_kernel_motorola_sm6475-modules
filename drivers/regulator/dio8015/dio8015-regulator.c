@@ -37,6 +37,7 @@ struct dio8015 {
 	int chip_cs_pin;
 	int init_value;
 	bool shutdown_ldo;
+	int chip_type;//dio8015:0;aw37004:1;unkown:2;
 };
 
 struct dio8015_evt_sta {
@@ -51,7 +52,7 @@ static const struct regmap_range dio8015_writeable_ranges[] = {
 };
 
 static const struct regmap_range dio8015_readable_ranges[] = {
-	regmap_reg_range(DIO8015_CHIP_REV, DIO8015_SEQ_STATUS),
+	regmap_reg_range(DIO8015_CHIP_REV, DIO8015_REG_CHIPID2),
 };
 
 static const struct regmap_range dio8015_volatile_ranges[] = {
@@ -76,7 +77,7 @@ static const struct regmap_access_table dio8015_volatile_table = {
 static const struct regmap_config dio8015_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = 0x0F,
+	.max_register = DIO8015_REG_CHIPID2,
 	.wr_table = &dio8015_writeable_table,
 	.rd_table = &dio8015_readable_table,
 	.volatile_table = &dio8015_volatile_table,
@@ -219,11 +220,13 @@ static int dio8015_regulator_init(struct dio8015 *chip)
 		return ret;
 	}
 	/* Enable all ldo discharge by default */
-	ret = regmap_write(chip->regmap, DIO8015_DISCHARGE_RESISTORS, 0x8f);
-	if (ret < 0) {
-		dev_err(chip->dev,
-			"Enable LDO discharge failed!!!\n");
-		return ret;
+	if (chip->chip_type == 0) {//dio8015 is 0x0f,aw37004 is 0x00 and has been initialized.
+		ret = regmap_write(chip->regmap, DIO8015_DISCHARGE_RESISTORS, 0x0f);
+		if (ret < 0) {
+			dev_err(chip->dev,
+				"Enable LDO discharge failed!!!\n");
+			return ret;
+		}
 	}
 	for (id = 0; id < DIO8015_MAX_REGULATORS; id++) {
 		chip->rdesc[id] = &dio8015_regls_desc[id];
@@ -269,11 +272,11 @@ static int dio8015_i2c_probe(struct i2c_client *client,
 	struct device *dev = &client->dev;
 	struct dio8015 *chip;
 	int error, cs_gpio, ret, i, value;
+	unsigned int chip_data = 0x00;
 
 	/* Set all register to initial value when probe driver to avoid register value was modified.
 	*/
-	const unsigned int initial_register[5][2] = {
-		{DIO8015_CURRENT_LIMITSEL, 	0x00},
+	const unsigned int initial_register[4][2] = {
 		{DIO8015_DISCHARGE_RESISTORS, 	0x00},
 		{DIO8015_LDO1_LDO2_SEQ, 	0x00},
 		{DIO8015_LDO3_LDO4_SEQ, 	0x00},
@@ -327,8 +330,35 @@ static int dio8015_i2c_probe(struct i2c_client *client,
 		return error;
 	}
 
+	ret = regmap_read(chip->regmap, DIO8015_CHIP_REV, &chip_data);
 
-	for (i = 0; i < 5; i++) {
+	dev_info(chip->dev, "0x00 data : %d\n", chip_data);
+
+	if (ret < 0) {
+		dev_err(chip->dev, "Failed to read DEVICE_ID reg: %d\n", ret);
+		return ret;
+	}
+
+	if (0x04 == chip_data) {
+		chip->chip_type = 0;
+		dev_info(chip->dev, "This is dio8015 ic,chip_type = %d\n", chip->chip_type);
+	}else if (0x00 == chip_data) {
+		ret = regmap_read(chip->regmap, DIO8015_REG_CHIPID2, &chip_data);
+		if (ret < 0) {
+			dev_err(chip->dev, "Failed to read CHIPID2 reg: %d\n", ret);
+			return ret;
+		}
+		if (0x04 == chip_data) {
+			chip->chip_type = 1;
+			dev_info(chip->dev, "This is aw37004 ic,chip_type = %d\n", chip->chip_type);
+		} else {
+			chip->chip_type = 2;
+			dev_err(chip->dev, "This is unknown ic,chip_type = %d\n", chip->chip_type);
+			return 0;
+		}
+	}
+
+	for (i = 0; i < 4; i++) {
 		ret = regmap_write(chip->regmap, initial_register[i][0], initial_register[i][1]);
 		if (ret < 0) {
 			dev_err(chip->dev,"Failed to write register: 0x%x, value: 0x%x \n",
