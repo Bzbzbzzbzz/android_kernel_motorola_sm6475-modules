@@ -34,6 +34,25 @@
 struct stk_data *global_stk;
 struct attribute_group stk_attribute_sar_group;
 
+static void stk_report_sar_state(struct stk_data* stk, int8_t nf_flag)
+{
+    stk501xx_wrapper *stk_wrapper = container_of(stk, stk501xx_wrapper, stk);
+    int8_t i = 0;
+
+    if (!stk_wrapper->channels[i].input_dev)
+    {
+        STK_ERR("No input device for sar data");
+        return;
+    }
+
+    for (i = 0; i < ch_num; i ++)
+    {
+        input_report_abs(stk_wrapper->channels[i].input_dev, ABS_DISTANCE, nf_flag);
+        input_sync(stk_wrapper->channels[i].input_dev);
+        STK_ERR("Always report FAR (%d)\n", nf_flag);
+    }
+}
+
 /**
  * @brief: Get power status
  *          Send 0 or 1 to userspace.
@@ -84,9 +103,17 @@ static ssize_t stk_enable_store(struct device *dev,
     STK_ERR("stk_enable_store, data=%d", data);
 
     if ((1 == data) || (0 == data))
+    {
         stk501xx_set_enable(stk, data);
+        if(1 == data)
+            stk_report_sar_state(stk, 0);
+        else
+            stk_report_sar_state(stk, -1);
+    }
     else
+    {
         STK_ERR("invalid argument, en=%d", data);
+    }
 
     return count;
 }
@@ -322,9 +349,17 @@ static ssize_t class_stk_enable_store(struct class *class,
     STK_ERR("stk_enable_store, data=%d", data);
 
     if ((1 == data) || (0 == data))
+    {
         stk501xx_set_enable(global_stk, data);
+        if(1 == data)
+            stk_report_sar_state(global_stk, 0);
+        else
+            stk_report_sar_state(global_stk, -1);
+    }
     else
+    {
         STK_ERR("invalid argument, en=%d", data);
+    }
 
     return count;
 }
@@ -580,10 +615,12 @@ static int stk_cdev_sensors_enable(struct sensors_classdev *sensors_cdev,
     if (0 == enabled)
     {
         stk501xx_set_enable(stk, 0);
+        stk_report_sar_state(stk, -1);
     }
     else if (1 == enabled)
     {
         stk501xx_set_enable(stk, 1);
+        stk_report_sar_state(stk, 0);
     }
     else
     {
@@ -683,6 +720,12 @@ static int stk_input_setup(stk501xx_wrapper *stk_wrapper)
             return err;
         }
 
+
+        input_report_abs(stk_wrapper->channels[i].input_dev, ABS_DISTANCE, -1);
+        input_sync(stk_wrapper->channels[i].input_dev);
+        STK_ERR("Initail report -1\n");
+
+
 #ifdef STK_SENSORS_DEV
         memcpy(&stk_wrapper->channels[i].sar_cdev, &stk_cdev, sizeof(struct sensors_classdev));
         stk_wrapper->channels[i].sar_cdev.name = input_dev_name[i];
@@ -726,8 +769,12 @@ static int stk_init_qualcomm(stk501xx_wrapper *stk_wrapper)
     }
 
     /* sysfs: create file system */
-    err = sysfs_create_group(&stk_wrapper->i2c_mgr.client->dev.kobj,
-                             &stk_attribute_sar_group);
+
+    for (i = 0; i < ch_num; i++)
+    {
+        err = sysfs_create_group(&stk_wrapper->channels[i].input_dev->dev.kobj,
+                                 &stk_attribute_sar_group);
+    }
 
     if (err)
     {
@@ -1056,6 +1103,8 @@ int stk_i2c_probe(struct i2c_client *client, struct common_function *common_fn)
         STK_ERR("stk_init_qualcomm failed");
         goto err_exit;
     }
+
+    stk_report_sar_state(stk, -1);
 
     STK_LOG("Success");
     return 0;

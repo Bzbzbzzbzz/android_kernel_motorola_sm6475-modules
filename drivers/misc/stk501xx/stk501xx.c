@@ -804,6 +804,28 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
         reg = STK_ADDR_IRQ_CONFIG;
         val = 0x0;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_TRIM_LOCK;
+        val = 0xA5;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_INHOUSE_CMD;
+        val = 0xA;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = 0x800;
+        STK_REG_READ(stk, reg, (uint8_t*)&val);
+        val &= ~((~val) | 0x30000000);
+        STK_ERR("stk501xx_set_enable after 0x800 = 0x%x\n", val);
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_INHOUSE_CMD;
+        val = 0x0;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_TRIM_LOCK;
+        val = 0x5A;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 #ifdef STK_INTERRUPT_MODE
         /* do nothing */
 #elif defined STK_POLLING_MODE
@@ -836,10 +858,33 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
         STK_TIMER_STOP(stk, &stk->stk_timer_info);
 #endif /* STK_INTERRUPT_MODE, STK_POLLING_MODE */
 
-#if 1 //pause mode
-        reg = STK_ADDR_IRQ_CONFIG;
-        val =  (1 << STK_IRQ_CONFIG_SENS_RATE_OPT_SHIFT);;
+#if 1 // pause mode
+        reg = STK_ADDR_TRIM_LOCK;
+        val = 0xA5;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_INHOUSE_CMD;
+        val = 0xA;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = 0x800;
+        STK_REG_READ(stk, reg, (uint8_t*)&val);
+        val |= 0x30000000;
+        STK_ERR("stk501xx_set_enable after 0x800 = 0x%x\n", val);
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_INHOUSE_CMD;
+        val = 0x0;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_TRIM_LOCK;
+        val = 0x5A;
+        STK_REG_WRITE(stk, reg, (uint8_t*)&val);
+
+        reg = STK_ADDR_IRQ_CONFIG;
+        val = (1 << STK_IRQ_CONFIG_SENS_RATE_OPT_SHIFT);
+
+        STK_REG_WRITE(stk, reg, (uint8_t *)&val);
 #else
         for (i = 0; i < num; i++)
         {
