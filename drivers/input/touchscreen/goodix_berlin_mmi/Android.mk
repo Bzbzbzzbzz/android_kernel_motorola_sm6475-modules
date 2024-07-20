@@ -10,7 +10,7 @@ ifeq ($(DRM_PANEL_NOTIFICATIONS),true)
 endif
 
 ifeq ($(TOUCHSCREEN_GOODIX_BRL_SPI),true)
-ifeq ($(call is-board-platform-in-list,taro kalama parrot crow pineapple blair), true)
+ifeq ($(call is-board-platform-in-list,taro kalama parrot crow pineapple blair sun), true)
 	KBUILD_OPTIONS += CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI=y
 else
 	KERNEL_CFLAGS += CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI=y
@@ -70,6 +70,10 @@ endif
 
 ifeq ($(ENABLE_GTP_PALM_CANCEL),true)
 	KBUILD_OPTIONS += CONFIG_ENABLE_GTP_PALM_CANCEL=y
+endif
+
+ifeq ($(TEMP_NOT_SUPPORT_TOUCHSCREEN_MMI),true)
+	KBUILD_OPTIONS += TEMP_NOT_SUPPORT_TOUCHSCREEN_MMI=y
 endif
 
 include $(CLEAR_VARS)
