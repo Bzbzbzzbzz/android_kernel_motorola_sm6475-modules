@@ -163,9 +163,12 @@ static void goodix_pdev_release(struct device *dev)
 	ts_info("goodix pdev released");
 	kfree(goodix_pdev);
 }
-
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int goodix_i2c_probe(struct i2c_client *client)
+#else
 static int goodix_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *dev_id)
+#endif
 {
 	int ret = 0;
 
