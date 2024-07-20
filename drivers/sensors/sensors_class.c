@@ -21,6 +21,7 @@
 #include <linux/rwsem.h>
 #include <linux/sensors.h>
 #include <linux/string.h>
+#include <linux/version.h>
 
 #define APPLY_MASK	0x00000001
 
@@ -546,7 +547,11 @@ EXPORT_SYMBOL(sensors_classdev_unregister);
 static int __init sensors_init(void)
 {
 	printk("moto sensor init!\n");
+#if KERNEL_VERSION(6, 3, 0) <= LINUX_VERSION_CODE
+        sensors_class = class_create("sensors");
+#else
 	sensors_class = class_create(THIS_MODULE, "sensors");
+#endif
 	if (IS_ERR(sensors_class))
 		{
 			printk("sensor init fail!\n");
