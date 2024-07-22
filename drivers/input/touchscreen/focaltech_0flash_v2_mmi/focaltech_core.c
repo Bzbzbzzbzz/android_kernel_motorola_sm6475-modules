@@ -55,6 +55,14 @@
 #endif
 #include "focaltech_core.h"
 
+#ifdef CONFIG_FTS_SPI_CS_DELAY
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+#include <linux/spi/spi-msm-geni.h>
+#else
+#include <linux/spi/spi-geni-qcom.h>
+#endif
+#endif
+
 #ifdef CONFIG_INPUT_TOUCHSCREEN_MMI
 #include <linux/mmi_device.h>
 extern int fts_mmi_dev_register(struct fts_ts_data *ts_data);
@@ -2614,6 +2622,9 @@ static int fts_ts_probe(struct spi_device *spi)
 {
     int ret = 0;
     struct fts_ts_data *ts_data = NULL;
+#ifdef CONFIG_FTS_SPI_CS_DELAY
+    struct spi_geni_qcom_ctrl_data *spi_param = NULL;
+#endif
 
     FTS_INFO("Touch Screen(SPI BUS) driver prboe...");
 #if defined(CONFIG_INPUT_FOCALTECH_0FLASH_MMI_IC_NAME_FT8725)
@@ -2634,6 +2645,15 @@ static int fts_ts_probe(struct spi_device *spi)
         return -ENOMEM;
     }
 
+#ifdef CONFIG_FTS_SPI_CS_DELAY
+    spi_param = devm_kzalloc(&spi->dev, sizeof(spi_param), GFP_KERNEL);
+    if(spi_param == NULL) {
+        FTS_ERROR("devm_kzalloc for spi_param failed!");
+        ret = -ENOMEM;
+        goto err_malloc_spi_param;
+    }
+#endif
+
     fts_data = ts_data;
     ts_data->spi = spi;
     ts_data->dev = &spi->dev;
@@ -2641,6 +2661,12 @@ static int fts_ts_probe(struct spi_device *spi)
 
     ts_data->bus_type = BUS_TYPE_SPI_V2;
     spi_set_drvdata(spi, ts_data);
+
+#ifdef CONFIG_FTS_SPI_CS_DELAY
+    /* Initialize the driver data */
+    spi_param->spi_cs_clk_delay = 1;
+    spi->controller_data = spi_param;
+#endif
 
     ret = fts_ts_probe_entry(ts_data);
     if (ret) {
@@ -2651,6 +2677,15 @@ static int fts_ts_probe(struct spi_device *spi)
 
     FTS_INFO("Touch Screen(SPI BUS) driver prboe successfully");
     return 0;
+
+#ifdef CONFIG_FTS_SPI_CS_DELAY
+err_malloc_spi_param:
+    if (ts_data) {
+        kfree(ts_data);
+        ts_data = NULL;
+    }
+    return ret;
+#endif
 }
 
 static int fts_ts_remove(struct spi_device *spi)

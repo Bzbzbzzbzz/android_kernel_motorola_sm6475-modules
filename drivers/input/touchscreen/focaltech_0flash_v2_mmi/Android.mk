@@ -53,6 +53,10 @@ ifeq ($(FOCALTECH_MULTI_FW_ENABLE),true)
 	KBUILD_OPTIONS += CONFIG_FTS_MULTI_FW=y
 endif
 
+ifeq ($(FOCALTECH_SPI_CS_DELAY),true)
+	KBUILD_OPTIONS += CONFIG_FTS_SPI_CS_DELAY=y
+endif
+
 include $(CLEAR_VARS)
 LOCAL_MODULE := focaltech_0flash_v2_mmi.ko
 LOCAL_MODULE_TAGS := optional

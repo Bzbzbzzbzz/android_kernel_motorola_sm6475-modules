@@ -68,4 +68,9 @@ ifneq ($(filter m y,$(CONFIG_FTS_MULTI_FW)),)
 	EXTRA_CFLAGS += -DCONFIG_FTS_MULTI_FW
 endif
 
+ifneq ($(filter m y, $(CONFIG_FTS_SPI_CS_DELAY)),)
+	EXTRA_CFLAGS += -DCONFIG_FTS_SPI_CS_DELAY
+endif
+
+
 KBUILD_EXTRA_SYMBOLS += $(CURDIR)/../../kernel/msm-$(MODULE_KERNEL_VERSION)/Module.symvers
