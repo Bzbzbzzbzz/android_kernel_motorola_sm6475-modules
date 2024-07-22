@@ -47,6 +47,10 @@
 #include <linux/fb.h>
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30)
+#include <linux/pinctrl/consumer.h>
+#endif
+
 #define GOODIX_CORE_DRIVER_NAME			"gdx_cli"
 #define GOODIX_PEN_DRIVER_NAME			"goodix_ts,pen"
 #define GOODIX_DRIVER_VERSION			"v1.3.15"

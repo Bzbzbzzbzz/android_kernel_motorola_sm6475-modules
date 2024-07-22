@@ -2,7 +2,7 @@ DLKM_DIR := motorola/kernel/modules
 LOCAL_PATH := $(call my-dir)
 
 ifeq ($(TOUCHSCREEN_GOODIX_BRL_SPI),true)
-ifeq ($(call is-board-platform-in-list,taro kalama parrot crow pineapple), true)
+ifeq ($(call is-board-platform-in-list,taro kalama parrot crow pineapple sun), true)
     KBUILD_OPTIONS += CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI=y
 else
     KERNEL_CFLAGS += CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI=y

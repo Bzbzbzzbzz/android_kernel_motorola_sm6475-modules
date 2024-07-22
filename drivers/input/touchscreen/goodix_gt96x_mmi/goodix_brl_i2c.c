@@ -154,8 +154,12 @@ write_exit:
 	return r;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30))
+static int goodix_i2c_probe(struct i2c_client *client)
+#else
 static int goodix_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *dev_id)
+#endif
 {
 	struct goodix_device_resource *dev_res;
 	int ret = 0;
