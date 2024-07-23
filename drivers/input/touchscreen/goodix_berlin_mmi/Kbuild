@@ -1,5 +1,8 @@
 # add -Wall to try to catch everything we can.
 EXTRA_CFLAGS += -Wall
+ifneq ($(filter m y,$(CHANGE_STACK_FRAME_SIZE)),)
+EXTRA_CFLAGS += -Wframe-larger-than=4096
+endif
 EXTRA_CFLAGS += \
 		-I$(ANDROID_BUILD_TOP)/motorola/kernel/modules/include
 

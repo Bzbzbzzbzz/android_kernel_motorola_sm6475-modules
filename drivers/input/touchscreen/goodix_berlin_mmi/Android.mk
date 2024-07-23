@@ -17,6 +17,11 @@ else
 endif
 endif
 
+ifeq ($(TARGET_BOARD_PLATFORM), sun)
+	KBUILD_OPTIONS += CHANGE_STACK_FRAME_SIZE=y
+endif
+
+
 ifeq ($(GTP_LIMIT_USE_SUPPLIER),true)
 	KBUILD_OPTIONS += CONFIG_GTP_LIMIT_USE_SUPPLIER=y
 endif
