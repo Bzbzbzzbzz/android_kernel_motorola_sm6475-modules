@@ -743,8 +743,13 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
         events[i].id = buf[FTS_TOUCH_ID_POS + base] >> 4;
         events[i].area = buf[FTS_TOUCH_AREA_POS + base] >> 4;
 #ifdef PICOLEAF_DATA_EN
-        events[i].p = press;//buf[FTS_TOUCH_PRE_POS + base];
-        FTS_INFO("events[0].p = (%d)", events[0].p);
+        if(press == 0){
+            FTS_DEBUG("RKRK 0ff events[0].p = (%d)", events[0].p);
+            events[i].p =  buf[FTS_TOUCH_PRE_POS + base];
+        } else {
+            FTS_DEBUG("RKRK on events[0].p = (%d)", events[0].p);
+            events[i].p = press;//buf[FTS_TOUCH_PRE_POS + base];
+        }
 #else
         events[i].p =  buf[FTS_TOUCH_PRE_POS + base];
 #endif
