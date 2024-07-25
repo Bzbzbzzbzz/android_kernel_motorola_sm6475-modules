@@ -1215,7 +1215,11 @@ int fts_power_source_ctrl(struct fts_ts_data *ts_data, int enable)
     } else {
         if (!ts_data->power_disabled) {
             FTS_DEBUG("regulator disable !");
-            gpio_direction_output(ts_data->pdata->reset_gpio, 0);
+            if (ts_data->pdata->reset_high){
+                gpio_direction_output(ts_data->pdata->reset_gpio, 1);
+            } else {
+                gpio_direction_output(ts_data->pdata->reset_gpio, 0);
+            }
             msleep(1);
             ret = regulator_disable(ts_data->vdd);
             if (ret) {
@@ -1525,6 +1529,8 @@ static int fts_parse_dt(struct device *dev, struct fts_ts_platform_data *pdata)
                  pdata->key_x_coords[1], pdata->key_y_coords[1],
                  pdata->key_x_coords[2], pdata->key_y_coords[2]);
     }
+
+    pdata->reset_high = of_property_read_bool(np, "focaltech,reset-high");
 
     /* reset, irq gpio info */
     pdata->reset_gpio = of_get_named_gpio_flags(np, "focaltech,reset-gpio",
