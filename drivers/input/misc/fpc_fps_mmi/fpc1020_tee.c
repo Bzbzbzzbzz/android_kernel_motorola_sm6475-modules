@@ -22,6 +22,10 @@
 #include <linux/platform_device.h>
 #include <linux/notifier.h>
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30)
+#include <linux/pinctrl/consumer.h>
+#endif
+
 #define RESET_LOW_SLEEP_MIN_US 5000
 #define RESET_LOW_SLEEP_MAX_US (RESET_LOW_SLEEP_MIN_US + 100)
 #define RESET_HIGH_SLEEP1_MIN_US 100
@@ -32,6 +36,8 @@
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 25))
 #define devm_gpio_free(a, b) NULL
 #endif
+
+
 
 struct FPS_data {
 	unsigned int enabled;

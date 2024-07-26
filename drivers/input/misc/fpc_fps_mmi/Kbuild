@@ -2,7 +2,7 @@
 EXTRA_CFLAGS += -Wall
 EXTRA_CFLAGS += -I$(TOP)/motorola/kernel/modules/include
 
-prod_list := devon
+prod_list := devon leap
 find_target := $(foreach find, $(prod_list), $(findstring $(find), $(TARGET_PRODUCT)))
 find_target := $(strip $(find_target))
 $(warning find_target=$(find_target))
