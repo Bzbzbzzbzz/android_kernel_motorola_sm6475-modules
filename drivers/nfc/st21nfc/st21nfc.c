@@ -692,9 +692,12 @@ static int nfc_parse_dt(struct device *dev, struct st21nfc_platform_data *pdata)
 }
 #endif
 
-
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 30)
+static int st21nfc_probe(struct i2c_client *client)
+#else
 static int st21nfc_probe(struct i2c_client *client,
 			 const struct i2c_device_id *id)
+#endif
 {
 	int ret = 0;
 	struct st21nfc_platform_data *platform_data;
@@ -887,7 +890,7 @@ static int st21nfc_probe(struct i2c_client *client,
 		pr_err("st_clock_select failed\n");
 		goto err_request_irq_failed;
 	}
-	pr_info("done successfully\n");
+	pr_err("done successfully\n");
 
 #ifdef ST_NFC_HW_DETECT
         pr_info("Start hw checking, double pulse request");
