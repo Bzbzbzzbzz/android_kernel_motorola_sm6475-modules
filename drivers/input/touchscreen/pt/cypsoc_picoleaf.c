@@ -2780,45 +2780,45 @@ int cypsoc_picoleaf_firmware_update(struct cypsoc_picoleaf_data *cpd){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		return CYPSOC_PICOLEAF_RET_NG;
 	}
-	return _cypsoc_picoleaf_firmware_update(cpd, 1);
+	return _cypsoc_picoleaf_firmware_update(cpd, 0);
 }
 EXPORT_SYMBOL_GPL(cypsoc_picoleaf_firmware_update);
 
-void cypsoc_picoleaf_suspend(struct cypsoc_picoleaf_data *cpd){
-	if (!cpd){
+void cypsoc_picoleaf_suspend(void){
+	if (!cpd_global){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		return;
 	}
-	cyp_debug(cpd->dev, CDL_INFO,
+	cyp_debug(cpd_global->dev, CDL_INFO,
 			"%s: Picoleaf PSoC suspends\n",
 			__func__);
-	if (cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE){
-		cyp_debug(cpd->dev, CDL_INFO,
+	if (cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE){
+		cyp_debug(cpd_global->dev, CDL_INFO,
 				"%s: PSoC rakuraku OFF for suspend\n",
 				__func__);
-		cypsoc_picoleaf_set_deep_sleep_mode_enable(cpd);
+		cypsoc_picoleaf_set_deep_sleep_mode_enable(cpd_global);
 	}
 }
 EXPORT_SYMBOL_GPL(cypsoc_picoleaf_suspend);
 
-void cypsoc_picoleaf_resume(struct cypsoc_picoleaf_data *cpd){
-	if (!cpd){
+void cypsoc_picoleaf_resume(void){
+	if (!cpd_global){
 		pr_err("%s: Error: cypsoc_picoleaf_data is NULL\n", __func__);
 		return;
 	}
-	cyp_debug(cpd->dev, CDL_INFO,
+	cyp_debug(cpd_global->dev, CDL_INFO,
 			"%s: Picoleaf PSoC resumes\n",
 			__func__);
-	if (cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE){
-		mutex_lock(&cpd->psoc_status_lock);
-		cpd->psoc_status = CYPSOC_PICOLEAF_STATUS_AVAILABLE;
-		mutex_unlock(&cpd->psoc_status_lock);
-		cyp_debug(cpd->dev, CDL_INFO, "%s: driver state was changed ON[TESTMODE] --> ON[normal]\n", __func__);
-	}else if (cpd->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE){
-		cyp_debug(cpd->dev, CDL_INFO,
+	if (cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_ON_TEST_MODE){
+		mutex_lock(&cpd_global->psoc_status_lock);
+		cpd_global->psoc_status = CYPSOC_PICOLEAF_STATUS_AVAILABLE;
+		mutex_unlock(&cpd_global->psoc_status_lock);
+		cyp_debug(cpd_global->dev, CDL_INFO, "%s: driver state was changed ON[TESTMODE] --> ON[normal]\n", __func__);
+	}else if (cpd_global->psoc_status == CYPSOC_PICOLEAF_STATUS_AVAILABLE){
+		cyp_debug(cpd_global->dev, CDL_INFO,
 				"%s: PSoC rakuraku ON for resume\n",
 				__func__);
-		cypsoc_picoleaf_set_deep_sleep_mode_disable(cpd);
+		cypsoc_picoleaf_set_deep_sleep_mode_disable(cpd_global);
 	}
 }
 EXPORT_SYMBOL_GPL(cypsoc_picoleaf_resume);

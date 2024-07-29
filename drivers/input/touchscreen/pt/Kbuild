@@ -15,9 +15,6 @@ pt-y += pt_proximity.o
 pt-y += pt_devtree.o pt_platform.o
 pt-y += pt_i2c.o
 #pt-objs += pt_spi.o
-obj-m += pt_debug.o
-obj-m += pt_loader.o
-obj-m += pt_device_access.o
 obj-m += cypsoc_picoleaf.o
 
 

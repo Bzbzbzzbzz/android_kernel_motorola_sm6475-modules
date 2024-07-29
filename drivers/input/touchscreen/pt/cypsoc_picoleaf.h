@@ -161,7 +161,7 @@ void cypsoc_picoleaf_i2c_readied(struct cypsoc_picoleaf_data *cpd);
 int  cypsoc_picoleaf_get_press_z(int *press);
 int  cypsoc_picoleaf_notification_enabled(void);
 int  cypsoc_picoleaf_firmware_update(struct cypsoc_picoleaf_data *cpd);
-void cypsoc_picoleaf_suspend(struct cypsoc_picoleaf_data *cpd);
-void cypsoc_picoleaf_resume(struct cypsoc_picoleaf_data *cpd);
+void cypsoc_picoleaf_suspend(void);
+void cypsoc_picoleaf_resume(void);
 
 #endif /* _CYPSOC_PICOLEAF_H */
