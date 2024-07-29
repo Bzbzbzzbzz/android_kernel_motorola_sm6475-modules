@@ -21,6 +21,8 @@
 static struct mmi_glink_chip *this_root_chip =  NULL;
 static struct wireless_glink_dev *this_chip = NULL;
 
+static void wireless_psy_init(struct wireless_glink_dev *chip);
+
  static int wireless_notify_handler(struct notifier_block *nb, unsigned long event, void *data)
 {
 	int rc = -1;
@@ -30,6 +32,10 @@ static struct wireless_glink_dev *this_chip = NULL;
 
 	mmi_dbg(this_root_chip, "wireless: notify-dev %ld", event);
 	if (event == DEV_WLS || event == DEV_ALL) {
+
+		if (!wls_chip->wls_dev_psy) {
+			wireless_psy_init(wls_chip);
+		}
 
 		rc = qti_charger_get_property(OEM_PROP_WLS_DUMP_INFO,
 					&wls_info,
