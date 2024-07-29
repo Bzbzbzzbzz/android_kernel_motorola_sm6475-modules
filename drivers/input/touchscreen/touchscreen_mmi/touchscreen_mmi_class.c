@@ -1099,7 +1099,11 @@ static int __init touchscreens_init(void)
 		pr_info("touchscreen_class: moto touchscreen already exist!\n");
 		return 0;
 	}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
+	touchscreens_class = class_create("touchscreen");
+#else
 	touchscreens_class = class_create(THIS_MODULE, "touchscreen");
+#endif
 	if (IS_ERR(touchscreens_class)) {
 		error = PTR_ERR(touchscreens_class);
 		touchscreens_class = NULL;
