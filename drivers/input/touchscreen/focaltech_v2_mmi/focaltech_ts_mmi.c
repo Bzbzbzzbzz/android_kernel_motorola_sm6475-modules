@@ -133,9 +133,15 @@ static int fts_mmi_methods_drv_irq(struct device *dev, int state)
 	mutex_lock(&input_dev->mutex);
 
 	if (state == 1) {
+#ifdef PICOLEAF_DATA_EN
+		cypsoc_picoleaf_resume();
+#endif
 		FTS_INFO("enable irq");
 		fts_irq_enable();
 	} else if (state == 0) {
+#ifdef PICOLEAF_DATA_EN
+		cypsoc_picoleaf_suspend();
+#endif
 		FTS_INFO("disable irq");
 		fts_irq_disable();
 	} else {
