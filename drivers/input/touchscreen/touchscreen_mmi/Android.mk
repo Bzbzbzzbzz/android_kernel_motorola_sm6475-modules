@@ -45,8 +45,8 @@ ifeq ($(TOUCHCLASS_MMI_EARLY_RESET_ON_RESUME),true)
 	KBUILD_OPTIONS += CONFIG_TOUCHSCREEN_EARLY_RESET_ON_RESUME=y
 endif
 
-ifeq ($(call is-board-platform-in-list, sun), true)
-	KBUILD_OPTIONS += CONFIG_NEW_DLKM_BUILD=y
+ifeq ($(BUILD_FOR_ANDROID_V),true)
+	KBUILD_OPTIONS += CONFIG_BUILD_FOR_ANDROID_V=y
 endif
 
 include $(CLEAR_VARS)
@@ -60,7 +60,7 @@ ifeq ($(DRM_DYNAMIC_REFRESH_RATE),true)
 LOCAL_ADDITIONAL_DEPENDENCIES += $(KERNEL_MODULES_OUT)/msm_drm.ko
 endif
 
-ifneq ($(call is-board-platform-in-list, sun), true)
+ifneq ($(BUILD_FOR_ANDROID_V),true)
 KBUILD_OPTIONS_GKI += MODULE_KERNEL_VERSION=$(TARGET_KERNEL_VERSION)
 endif
 KBUILD_OPTIONS_GKI += GKI_OBJ_MODULE_DIR=gki
