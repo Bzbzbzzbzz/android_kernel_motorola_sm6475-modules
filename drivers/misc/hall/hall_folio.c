@@ -20,6 +20,7 @@
 #include <linux/of_gpio.h>
 #include <linux/irq.h>
 #include <linux/regulator/consumer.h>
+#include <linux/version.h>
 
 #define DRIVER_NAME "hall_folio_detect"
 #define LOG_DBG(fmt, args...)    pr_info(DRIVER_NAME " [DBG]" "<%s:%d>"fmt, __func__, __LINE__, ##args)
@@ -106,10 +107,15 @@ void hall_enable(bool enable)
 		hall_sensor_dev->enable = 0;
 	}
 }
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 static ssize_t hall_enable_store(struct class *class,
 		struct class_attribute *attr,
 		const char *buf, size_t count)
+#else
+static ssize_t hall_enable_store(const struct class *class,
+		const struct class_attribute *attr,
+		const char *buf, size_t count)
+#endif
 {
 	if (!strncmp(buf, "1", 1))
 	{
@@ -121,10 +127,15 @@ static ssize_t hall_enable_store(struct class *class,
 	}
 	return count;
 }
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 static ssize_t hall_rawdata_show(struct class *class,
 		struct class_attribute *attr,
 		char *buf)
+#else
+static ssize_t hall_rawdata_show(const struct class *class,
+		const struct class_attribute *attr,
+		char *buf)
+#endif
 {
 	return sprintf(buf, "%d\n", hall_sensor_dev->report_val);
 }
@@ -133,6 +144,8 @@ static struct class_attribute class_attr_enable =
 __ATTR(enable, 0660, NULL, hall_enable_store);
 static struct class_attribute class_attr_rawdata =
 __ATTR(rawdata, 0660, hall_rawdata_show, NULL);
+
+
 
 static struct attribute *hall_class_attrs[] = {
 	&class_attr_enable.attr,
@@ -143,7 +156,9 @@ ATTRIBUTE_GROUPS(hall_class);
 
 struct class hall_class = {
 	.name                   = "hall",
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 	.owner                  = THIS_MODULE,
+#endif
 	.class_groups           = hall_class_groups,
 };
 
@@ -160,7 +175,9 @@ static irqreturn_t hall_sensor_interrupt_handler(int irq, void *dev_id)
 static int hall_sensor_probe(struct platform_device *pdev)
 {
 	int ret = 0;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 	enum of_gpio_flags flags;
+#endif
 	struct device_node *np = pdev->dev.of_node;
 	int i;
 
@@ -198,7 +215,11 @@ static int hall_sensor_probe(struct platform_device *pdev)
 		sprintf(gpio_name, "hall,nirq-gpio-low-val_%d", i);
 		ret =  of_property_read_u32(np, gpio_name, &hall_sensor_dev->gpio_list[i].gpio_low_report_val);
 		sprintf(gpio_name, "hall,nirq-gpio_%d", i);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 		hall_sensor_dev->gpio_list[i].gpio = of_get_named_gpio_flags(np, gpio_name, 0, &flags);
+#else
+		hall_sensor_dev->gpio_list[i].gpio = of_get_named_gpio(np, gpio_name, 0);
+#endif
 		LOG_INFO("hall_sensor %s gpio = %d val = %d:%d", gpio_name, hall_sensor_dev->gpio_list[i].gpio,
 						hall_sensor_dev->gpio_list[i].gpio_high_report_val,
 						hall_sensor_dev->gpio_list[i].gpio_low_report_val);
@@ -237,10 +258,13 @@ static int hall_sensor_probe(struct platform_device *pdev)
 	}
 	else
 	{
-		regulator_enable(hall_sensor_dev->hall_vdd);
-		LOG_INFO("hall_vdd regulator is %s",
-				regulator_is_enabled(hall_sensor_dev->hall_vdd) ?
-				"on" : "off");
+		ret = regulator_enable(hall_sensor_dev->hall_vdd);
+		if (ret) {
+			regulator_put(hall_sensor_dev->hall_vdd);
+			LOG_ERR("Error %d enable regulator\n",
+					ret);
+			goto fail_for_irq;
+		}
 	}
 	LOG_INFO("hall_sensor_probe Done");
 	return 0;
