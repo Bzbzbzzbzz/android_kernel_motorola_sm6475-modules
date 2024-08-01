@@ -25,7 +25,11 @@
 #include <linux/string.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,6,0)
+#include <linux/soc/qcom/qti_pmic_glink.h>
+#else
 #include <linux/soc/qcom/pmic_glink.h>
+#endif
 #include <linux/power/bm_adsp_ulog.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
