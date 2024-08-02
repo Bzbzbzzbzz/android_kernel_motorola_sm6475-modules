@@ -133,7 +133,7 @@ int mmi_glink_class_init(void)
 	srcu_init_notifier_head(&mmi_glink_notifier_chain);
 	/* Rename srcu's lock to avoid LockProve warning */
 	lockdep_init_map(&(&mmi_glink_notifier_chain.srcu)->dep_map, "mmi_glink_charger", &key, 0);
-	
+
 	pr_info("success to create mmi glink charger class \n");
 	return 0;
 }

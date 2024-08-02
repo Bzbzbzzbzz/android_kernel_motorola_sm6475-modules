@@ -37,6 +37,7 @@
 #include "battery_glink.h"
 #include "balance_charge_glink.h"
 #include "wireless_charge_glink.h"
+#include "switch_buck_glink.h"
 #include "trusted_shash_lib.h"
 #define HYST_STEP_MV 50
 #define DEMO_MODE_HYS_SOC 5
@@ -1236,7 +1237,8 @@ int mmi_glink_dev_init(struct mmi_glink_chip *chip,
 			glink_dev = battery_glink_device_register(chip, &dev_dts[i]);
 			break;
 		case DEV_SWITCH_BUCK:
-
+			mmi_info(chip, "switch_buck glink device register");
+			glink_dev = switch_buck_device_register(chip, &dev_dts[i]);
 			break;
 		case DEV_CHARGE_PUMP:
 

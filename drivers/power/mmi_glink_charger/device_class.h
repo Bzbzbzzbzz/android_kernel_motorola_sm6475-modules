@@ -10,7 +10,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
- 
+
 #ifndef __MMI_DEVICE_CLASS_H__
 #define __MMI_DEVICE_CLASS_H__
 #include <linux/notifier.h>
