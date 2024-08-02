@@ -1024,7 +1024,11 @@ static int __init gf_init(void)
 		return status;
 	}
 	SPIDEV_MAJOR = status;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
 	gf_class = class_create(THIS_MODULE, CLASS_NAME);
+#else
+	gf_class = class_create(CLASS_NAME);
+#endif
 	if (IS_ERR(gf_class)) {
 		unregister_chrdev(SPIDEV_MAJOR, gf_driver.driver.name);
 		pr_warn("Failed to create class.\n");
