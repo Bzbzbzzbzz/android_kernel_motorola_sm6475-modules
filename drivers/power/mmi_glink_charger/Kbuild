@@ -15,7 +15,7 @@ obj-m += mmi_glink_charger.o
 mmi_glink_charger-objs := mmi_glink_core.o device_class.o battery_host.o trusted_shash_lib.o
 mmi_glink_charger-objs += device_glink/battery_glink.o
 mmi_glink_charger-objs += device_glink/wireless_charge_glink.o
-#mmi_glink_charger-objs += device_glink/charge_pump_glink.o
+mmi_glink_charger-objs += device_glink/charge_pump_glink.o
 mmi_glink_charger-objs += device_glink/balance_charge_glink.o
 mmi_glink_charger-objs += device_glink/switch_buck_glink.o
 

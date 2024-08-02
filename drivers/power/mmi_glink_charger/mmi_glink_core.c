@@ -38,6 +38,7 @@
 #include "balance_charge_glink.h"
 #include "wireless_charge_glink.h"
 #include "switch_buck_glink.h"
+#include "charge_pump_glink.h"
 #include "trusted_shash_lib.h"
 #define HYST_STEP_MV 50
 #define DEMO_MODE_HYS_SOC 5
@@ -1241,7 +1242,8 @@ int mmi_glink_dev_init(struct mmi_glink_chip *chip,
 			glink_dev = switch_buck_device_register(chip, &dev_dts[i]);
 			break;
 		case DEV_CHARGE_PUMP:
-
+			mmi_info(chip, "charge_pump[%d] glink device register", dev_dts[i].dev_role);
+			glink_dev = charge_pump_glink_device_register(chip, &dev_dts[i]);
 			break;
 		case DEV_BALANCE_CHG:
 			mmi_info(chip, "balance[%d] glink device register", dev_dts[i].dev_role);
@@ -1405,7 +1407,8 @@ static int mmi_parse_dt(struct mmi_glink_chip *chip)
 			&glink_dev_dts_list[chrg_idx].dev_type);
 
 		if (glink_dev_dts_list[chrg_idx].dev_type == DEV_BATT ||
-			glink_dev_dts_list[chrg_idx].dev_type == DEV_BALANCE_CHG) {
+			glink_dev_dts_list[chrg_idx].dev_type == DEV_BALANCE_CHG ||
+			glink_dev_dts_list[chrg_idx].dev_type == DEV_CHARGE_PUMP) {
 			of_property_read_u32(child, "dev-role",
 				&glink_dev_dts_list[chrg_idx].dev_role);
 
