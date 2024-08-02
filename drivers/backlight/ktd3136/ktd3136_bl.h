@@ -146,6 +146,7 @@ struct ktd3136_data {
 	unsigned int induct_current;
 	unsigned int flash_current;
 	unsigned int flash_timeout;
+	unsigned int pwm_hysteresis;
 
 };
 

@@ -193,7 +193,11 @@ static void ktd3136_pwm_mode_enable(struct ktd3136_data *drvdata, bool mode)
 		} else {
 			drvdata->pwm_mode = mode;
 		}
-		ktd3136_masked_write(drvdata->client, REG_PWM, 0x80, 0x80);
+		if(drvdata->pwm_hysteresis == 8){
+			ktd3136_masked_write(drvdata->client, REG_PWM, 0xFF, 0x27);
+		}else{
+			ktd3136_masked_write(drvdata->client, REG_PWM, 0x80, 0x80);
+		}
 	} else {
 		//0:enable as default
 		if (drvdata->pwm_mode) {
@@ -271,6 +275,9 @@ static void ktd3136_transition_ramp(struct ktd3136_data *drvdata)
 
 	ktd3136_masked_write(drvdata->client, REG_TRANS_RAMP, 0x70, reg_pwm);
 	ktd3136_masked_write(drvdata->client, REG_TRANS_RAMP, 0x0f, reg_i2c);
+	if(drvdata->pwm_trans_dim == 4){
+		ktd3136_masked_write(drvdata->client, REG_TRANS_RAMP, 0xFF, 0x11);
+	}
 
 }
 
@@ -503,6 +510,13 @@ static void ktd3136_get_dt_data(struct device *dev, struct ktd3136_data *drvdata
 	}
 	else
 		pr_info("%s map-type=%d\n", __func__, drvdata->map_type);
+
+	rc = of_property_read_u32(np, "ktd,pwm-hysteresis", &drvdata->pwm_hysteresis);
+	if (rc != 0) {
+		pr_info("%s pwm-hysteresis default: 6\n", __func__);
+	}
+	else
+		pr_info("%s pwm-hysteresis=%d\n", __func__, drvdata->pwm_hysteresis);
 
 	rc = of_property_read_u32(np, "ktd,current-align-type", &drvdata->led_current_align);
 	if (rc != 0) {
