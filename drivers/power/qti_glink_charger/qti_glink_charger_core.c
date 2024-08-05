@@ -2211,6 +2211,50 @@ static DEVICE_ATTR(rx_dev_id, S_IRUGO,
 		rx_dev_id_show,
 		NULL);
 
+static ssize_t wlc_fac_vbus_voltage_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	u32 vbus = 0;
+	struct qti_charger *chg = this_chip;
+
+	if (!chg) {
+		pr_err("QTI: chip not valid\n");
+		return -ENODEV;
+	}
+
+	qti_charger_read(chg, OEM_PROP_WLS_FAC_VBUS_VOLTAGE_ID,
+				&vbus,
+				sizeof(vbus));
+
+	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%#x\n", vbus);
+}
+static DEVICE_ATTR(wlc_fac_vbus_voltage, S_IRUGO,
+		wlc_fac_vbus_voltage_show,
+		NULL);
+
+static ssize_t wlc_fac_ibus_current_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	u32 ibus = 0;
+	struct qti_charger *chg = this_chip;
+
+	if (!chg) {
+		pr_err("QTI: chip not valid\n");
+		return -ENODEV;
+	}
+
+	qti_charger_read(chg, OEM_PROP_WLS_FAC_IBUS_CURRENT_ID,
+				&ibus,
+				sizeof(ibus));
+
+	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%#x\n", ibus);
+}
+static DEVICE_ATTR(wlc_fac_ibus_current, S_IRUGO,
+		wlc_fac_ibus_current_show,
+		NULL);
+
 
 static ssize_t wlc_st_changed_show(struct device *dev,
 					struct device_attribute *attr,
@@ -2926,6 +2970,14 @@ static void wireless_psy_init(struct qti_charger *chg)
 				&dev_attr_wls_weak_charge_disable);
         if (rc)
 		pr_err("couldn't create wireless wlc weak charge disable error\n");
+	rc = device_create_file(chg->wls_psy->dev.parent,
+				&dev_attr_wlc_fac_vbus_voltage);
+        if (rc)
+		pr_err("couldn't create wireless wlc fac_vbus changed error\n");
+	rc = device_create_file(chg->wls_psy->dev.parent,
+				&dev_attr_wlc_fac_ibus_current);
+        if (rc)
+		pr_err("couldn't create wireless wlc fac_ibus changed error\n");
 	chg->wls_nb.notifier_call = wireless_charger_notify_callback;
 	rc = qti_charger_register_notifier(&chg->wls_nb);
 	if (rc)
