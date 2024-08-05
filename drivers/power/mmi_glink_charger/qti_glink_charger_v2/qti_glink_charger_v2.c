@@ -341,7 +341,7 @@ static int qti_charger_read(struct qti_charger *chg, u32 property,
 	}
 
 	if (chg->rx_buf.data_size != val_len) {
-		mmi_err(chg, "Invalid data size %u, on property: %u\n",
+		mmi_dbg(chg, "Invalid data size %u, on property: %u\n",
 				chg->rx_buf.data_size, property);
 		rc = -ENODATA;
 		goto out;

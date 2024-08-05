@@ -47,7 +47,7 @@ static ssize_t charge_pump_chg_en_show(struct device *dev,
 				&chg_en,
 				sizeof(chg_en));
 
-	mmi_info(this_root_chip, "Get charge_pump_chip_en[%d]=%d", dev_role, chg_en);
+	mmi_dbg(this_root_chip, "Get charge_pump_chip_en[%d]=%d", dev_role, chg_en);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", chg_en);
 }
 
@@ -119,7 +119,7 @@ static ssize_t charge_pump_manual_mode_show(struct device *dev,
 				&manual_mode,
 				sizeof(manual_mode));
 
-	mmi_info(this_root_chip, "Get charge_pump_manual_mode[%d] = %d", dev_role, manual_mode);
+	mmi_dbg(this_root_chip, "Get charge_pump_manual_mode[%d] = %d", dev_role, manual_mode);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", manual_mode);
 }
 
@@ -152,7 +152,7 @@ static ssize_t charge_pump_ovpgate_en_show(struct device *dev,
 				&ovpgate_en,
 				sizeof(ovpgate_en));
 
-	mmi_info(this_root_chip, "Get charge_pump_ovpgate_en[%d]=%d", dev_role, ovpgate_en);
+	mmi_dbg(this_root_chip, "Get charge_pump_ovpgate_en[%d]=%d", dev_role, ovpgate_en);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", ovpgate_en);
 }
 
@@ -219,7 +219,7 @@ static int charge_pump_psy_get_prop(struct power_supply *psy,
 }
 
 static struct power_supply_desc charge_pump_psy_desc_master = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_UNKNOWN,
 	.get_property	= charge_pump_psy_get_prop,
 	.set_property	= NULL,
 	.properties	= charge_pump_psy_props,
@@ -227,7 +227,7 @@ static struct power_supply_desc charge_pump_psy_desc_master = {
 };
 
 static struct power_supply_desc charge_pump_psy_desc_slave = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_UNKNOWN,
 	.get_property	= charge_pump_psy_get_prop,
 	.set_property	= NULL,
 	.properties	= charge_pump_psy_props,

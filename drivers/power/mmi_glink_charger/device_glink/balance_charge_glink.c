@@ -47,7 +47,7 @@ static ssize_t balance_chip_en_show(struct device *dev,
 				&chip_en,
 				sizeof(chip_en));
 
-	mmi_info(this_root_chip, "Get balance_chip_en[%d]", dev_role);
+	mmi_dbg(this_root_chip, "Get balance_chip_en[%d]: %d", dev_role, chip_en);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", chip_en);
 }
 
@@ -88,7 +88,7 @@ static ssize_t balance_chip_en_store(struct device *dev,
 	r = qti_charger_set_property(property,
 				&chip_en,
 				sizeof(chip_en));
-	mmi_info(this_root_chip, "Set balance_chip_en[%d]", dev_role);
+	mmi_info(this_root_chip, "Set balance_chip_en[%d]: %ld", dev_role, chip_en);
 	return r ? r : count;
 }
 static DEVICE_ATTR(balance_chip_en, S_IRUGO|S_IWUSR, balance_chip_en_show, balance_chip_en_store);
@@ -120,7 +120,7 @@ static ssize_t balance_chrg_dis_show(struct device *dev,
 				&chrg_en,
 				sizeof(chrg_en));
 
-	mmi_info(this_root_chip, "Get balance_chrg_en[%d]", dev_role);
+	mmi_dbg(this_root_chip, "Get balance_chrg_dis[%d]: %d", dev_role, chrg_en);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", chrg_en);
 }
 
@@ -160,7 +160,7 @@ static ssize_t balance_chrg_dis_store(struct device *dev,
 				&chrg_en,
 				sizeof(chrg_en));
 
-	mmi_info(this_root_chip, "Set balance_chrg_en[%d]", dev_role);
+	mmi_info(this_root_chip, "Set balance_chrg_dis[%d]: %ld", dev_role, chrg_en);
 	return r ? r : count;
 }
 static DEVICE_ATTR(balance_chrg_dis, S_IRUGO|S_IWUSR, balance_chrg_dis_show, balance_chrg_dis_store);
@@ -192,7 +192,7 @@ static ssize_t balance_extmos_en_show(struct device *dev,
 				&extmos_en,
 				sizeof(extmos_en));
 
-	mmi_info(this_root_chip, "Get balance_extmos_en[%d]", dev_role);
+	mmi_dbg(this_root_chip, "Get balance_extmos_en[%d]: %d", dev_role, extmos_en);
 	return scnprintf(buf, CHG_SHOW_MAX_SIZE, "%d\n", extmos_en);
 }
 
@@ -232,7 +232,7 @@ static ssize_t balance_extmos_en_store(struct device *dev,
 				&extmos_en,
 				sizeof(extmos_en));
 
-	mmi_info(this_root_chip, "Set balance_extmos_en[%d]", dev_role);
+	mmi_info(this_root_chip, "Set balance_extmos_en[%d]: %ld", dev_role, extmos_en);
 	return r ? r : count;
 }
 static DEVICE_ATTR(balance_extmos_en, S_IRUGO|S_IWUSR, balance_extmos_en_show, balance_extmos_en_store);
@@ -240,7 +240,6 @@ static DEVICE_ATTR(balance_extmos_en, S_IRUGO|S_IWUSR, balance_extmos_en_show, b
 static enum power_supply_property balance_psy_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
-	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_MAX,
@@ -347,7 +346,7 @@ static int balance_psy_prop_is_writeable(struct power_supply *psy,
 }
 
 static struct power_supply_desc balance_psy_desc_master = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_UNKNOWN,
 	.get_property	= balance_psy_get_prop,
 	.set_property	= balance_psy_set_prop,
 	.property_is_writeable = balance_psy_prop_is_writeable,
@@ -356,7 +355,7 @@ static struct power_supply_desc balance_psy_desc_master = {
 };
 
 static struct power_supply_desc balance_psy_desc_slave = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_UNKNOWN,
 	.get_property	= balance_psy_get_prop,
 	.set_property	= balance_psy_set_prop,
 	.property_is_writeable = balance_psy_prop_is_writeable,

@@ -22,9 +22,9 @@ static struct battery_glink_dev *this_batt_chip[BATT_NUM] = {NULL};
 
 static enum power_supply_property batt_psy_props[] = {
 	POWER_SUPPLY_PROP_STATUS,
-	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_CYCLE_COUNT,
 	POWER_SUPPLY_PROP_CHARGE_FULL,
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
@@ -75,6 +75,9 @@ static int batt_psy_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		pval->intval = batt_info.batt_soc / 100;
+		break;
+	case POWER_SUPPLY_PROP_HEALTH:
+		pval->intval= POWER_SUPPLY_HEALTH_GOOD;
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		pval->intval = batt_info.batt_temp / 10;
@@ -137,7 +140,7 @@ static int batt_psy_prop_is_writeable(struct power_supply *psy,
 }
 
 static struct power_supply_desc batt_psy_desc_main = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_MAINS,
 	.get_property	= batt_psy_get_prop,
 	.set_property	= batt_psy_set_prop,
 	.property_is_writeable = batt_psy_prop_is_writeable,
@@ -146,7 +149,7 @@ static struct power_supply_desc batt_psy_desc_main = {
 };
 
 static struct power_supply_desc batt_psy_desc_flip = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_MAINS,
 	.get_property	= batt_psy_get_prop,
 	.set_property	= batt_psy_set_prop,
 	.property_is_writeable = batt_psy_prop_is_writeable,

@@ -246,7 +246,7 @@ static int buck_psy_prop_is_writeable(struct power_supply *psy,
 
 
 static struct power_supply_desc buck_psy_desc = {
-	.type		= POWER_SUPPLY_TYPE_BATTERY,
+	.type		= POWER_SUPPLY_TYPE_UNKNOWN,
 	.get_property	= buck_psy_get_prop,
 	.set_property	= buck_psy_set_prop,
 	.property_is_writeable = buck_psy_prop_is_writeable,
