@@ -790,17 +790,29 @@ int32_t stk_read_detect_dist_flag(struct stk_data* stk, uint32_t* dist1_flag)
 }
 
 
-void stk501xx_set_enable(struct stk_data* stk, char enable)
+void stk501xx_set_enable(struct stk_data* stk, char enable,bool pause_mode)
 {
 //    uint8_t num = (sizeof(stk->state_change) / sizeof(uint8_t));
 //    uint16_t i;
+    uint8_t i, num = (sizeof(stk->state_change) / sizeof(uint8_t));
     uint16_t reg = 0;
     uint32_t val = 0, flag = 0;
-    STK_ERR("stk501xx_set_enable en=%d", enable);
-
+     STK_ERR("stk501xx_set_enable en=%d, p_mode =%d\n", enable, pause_mode);
     if (enable)
     {
-#if 1 //pause mode
+#ifdef STK_POLLING_MODE
+        STK_TIMER_START(stk, &stk->stk_timer_info);
+#endif
+        if(pause_mode)
+        {
+            reg = STK_ADDR_TRIGGER_REG;
+            STK_REG_READ(stk, reg, (uint8_t*)&val);
+            if((val& STK_TRIGGER_REG_INIT_ALL) == 0)
+            {
+                val = STK_TRIGGER_REG_INIT_ALL;
+                STK_REG_WRITE(stk, reg, (uint8_t *)&val);
+                force_phase_en(stk, STK_TRIGGER_CMD_REG_INIT_ALL);
+            }
         reg = STK_ADDR_IRQ_CONFIG;
         val = 0x0;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
@@ -826,24 +838,14 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
         reg = STK_ADDR_TRIM_LOCK;
         val = 0x5A;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
-#ifdef STK_INTERRUPT_MODE
-        /* do nothing */
-#elif defined STK_POLLING_MODE
-        STK_TIMER_START(stk, &stk->stk_timer_info);
-#endif /* STK_INTERRUPT_MODE, STK_POLLING_MODE */
-#else
-//        stk501xx_set_thd(stk);
+     }
+     else {
         reg = STK_ADDR_TRIGGER_REG;
         val = STK_TRIGGER_REG_INIT_ALL;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
         force_phase_en(stk, STK_TRIGGER_CMD_REG_INIT_ALL);
-#ifdef STK_INTERRUPT_MODE
-        /* do nothing */
-#elif defined STK_POLLING_MODE
-        STK_TIMER_START(stk, &stk->stk_timer_info);
-#endif /* STK_INTERRUPT_MODE, STK_POLLING_MODE */
-#endif // pause mode
+        }
 
 #ifdef TEMP_COMPENSATION
         stk->last_prox_a_state = 0;
@@ -852,13 +854,14 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
     }
     else
     {
-#ifdef STK_INTERRUPT_MODE
+
         /* do nothing */
-#elif defined STK_POLLING_MODE
+#ifdef STK_POLLING_MODE
         STK_TIMER_STOP(stk, &stk->stk_timer_info);
 #endif /* STK_INTERRUPT_MODE, STK_POLLING_MODE */
 
-#if 1 // pause mode
+     if(pause_mode)
+        {
         reg = STK_ADDR_TRIM_LOCK;
         val = 0xA5;
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
@@ -885,7 +888,9 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
         val = (1 << STK_IRQ_CONFIG_SENS_RATE_OPT_SHIFT);
 
         STK_REG_WRITE(stk, reg, (uint8_t *)&val);
-#else
+      }
+      else
+      {
         for (i = 0; i < num; i++)
         {
             stk->last_nearby[i] = STK_SAR_NEAR_BY_UNKNOWN;
@@ -899,7 +904,8 @@ void stk501xx_set_enable(struct stk_data* stk, char enable)
         STK_REG_WRITE(stk, reg, (uint8_t*)&val);
 
         force_phase_en(stk, STK_TRIGGER_CMD_REG_INIT_ALL);
-#endif //pause mode
+       }
+
 #ifdef TEMP_COMPENSATION
         clr_temp(stk);
 #endif
@@ -1359,7 +1365,7 @@ static int32_t stk_reg_init(struct stk_data* stk)
     force_phase_en(stk, STK_TRIGGER_CMD_REG_INIT_ALL);
 
     // set power down for default
-    stk501xx_set_enable(stk, 0);
+    stk501xx_set_enable(stk, 0, false);
     stk501xx_set_thd(stk);
 
     stk->dist_phase = stk501xx_read_dist_phase(stk);
@@ -1507,7 +1513,7 @@ void stk_work_queue(void *stkdata)
             stk501xx_sw_reset(stk);
             stk_clr_intr(stk, &flag);
             stk_reg_init(stk);
-            stk501xx_set_enable(stk, true);
+            stk501xx_set_enable(stk, true,false);
         }
         return;
     }

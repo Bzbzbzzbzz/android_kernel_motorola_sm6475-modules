@@ -647,7 +647,7 @@ struct stk_data
 
 #define STK501XX_SAR_REPORT(stk_data)                        if ((stk_data)->sar_report_cb)          ((stk_data)->sar_report_cb(stk_data))
 
-void stk501xx_set_enable(struct stk_data* stk, char enable);
+void stk501xx_set_enable(struct stk_data* stk, char enable, bool pause_mode);
 int32_t stk_read_prox_flag(struct stk_data* stk, uint32_t* prox_flag);
 void stk501xx_read_temp_data(struct stk_data* stk, uint16_t reg, int32_t *temperature);
 void stk501xx_read_sar_data(struct stk_data* stk, uint32_t prox_flag, uint16_t dist_phase);

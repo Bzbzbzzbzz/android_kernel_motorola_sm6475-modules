@@ -104,7 +104,7 @@ static ssize_t stk_enable_store(struct device *dev,
 
     if ((1 == data) || (0 == data))
     {
-        stk501xx_set_enable(stk, data);
+        stk501xx_set_enable(stk, data, false);
         if(1 == data)
             stk_report_sar_state(stk, 0);
         else
@@ -212,7 +212,7 @@ static ssize_t stk_send_store(struct device *dev,
     STK_ERR("write reg[0x%X]=0x%X", addr, cmd);
 
     if (!stk->enabled)
-        stk501xx_set_enable(stk, 1);
+        stk501xx_set_enable(stk, 1, true);
     else
         enable = true;
 
@@ -225,7 +225,7 @@ static ssize_t stk_send_store(struct device *dev,
 exit:
 
     if (!enable)
-        stk501xx_set_enable(stk, 0);
+        stk501xx_set_enable(stk, 0, true);
 
     if (err)
         return -1;
@@ -350,7 +350,7 @@ static ssize_t class_stk_enable_store(struct class *class,
 
     if ((1 == data) || (0 == data))
     {
-        stk501xx_set_enable(global_stk, data);
+        stk501xx_set_enable(global_stk, data, false);
         if(1 == data)
             stk_report_sar_state(global_stk, 0);
         else
@@ -431,7 +431,7 @@ static ssize_t class_stk_send_store(struct class *class,
     STK_ERR("write reg[0x%X]=0x%X", addr, cmd);
 
     if (!global_stk->enabled)
-        stk501xx_set_enable(global_stk, 1);
+        stk501xx_set_enable(global_stk, 1, true);
     else
         enable = true;
 
@@ -444,7 +444,7 @@ static ssize_t class_stk_send_store(struct class *class,
 exit:
 
     if (!enable)
-        stk501xx_set_enable(global_stk, 0);
+        stk501xx_set_enable(global_stk, 0, true);
 
     if (err)
         return -1;
@@ -611,15 +611,15 @@ static int stk_cdev_sensors_enable(struct sensors_classdev *sensors_cdev,
     //struct stk501xx_wrapper *stk_wrapper = container_of(sensors_cdev, stk501xx_wrapper, channels[0].sar_cdev);
     //struct stk_data *stk = &stk_wrapper->stk;
     struct stk_data *stk = global_stk;
-
+     STK_ERR("stk_cdev_sensors_enable , en=%d\n", enabled);
     if (0 == enabled)
     {
-        stk501xx_set_enable(stk, 0);
+        stk501xx_set_enable(stk, 0, false);
         stk_report_sar_state(stk, -1);
     }
     else if (1 == enabled)
     {
-        stk501xx_set_enable(stk, 1);
+        stk501xx_set_enable(stk, 1, false);
         stk_report_sar_state(stk, 0);
     }
     else
@@ -1153,7 +1153,7 @@ int stk501xx_suspend(struct device* dev)
 
     if (stk->enabled)
     {
-        stk501xx_set_enable(stk, 0);
+        stk501xx_set_enable(stk, 0, true);
         stk->last_enable = true;
     }
     else
@@ -1168,7 +1168,7 @@ int stk501xx_resume(struct device* dev)
     struct stk_data *stk = &stk_wrapper->stk;
 
     if (stk->last_enable)
-        stk501xx_set_enable(stk, 1);
+        stk501xx_set_enable(stk, 1, true);
 
     stk->last_enable = false;
     return 0;
