@@ -2781,6 +2781,22 @@ static void brightness_set(struct led_classdev *cdev, enum led_brightness level)
 	}
 	duration = transient_data->duration;
 	aw_info("duration is %llu", duration);
+
+#ifdef FCNT_VIBRATION
+	if(duration == 8) {
+		mutex_lock(&aw_haptic->lock);
+		aw_info("short vibration enable duration:%llu", duration);
+		aw_haptic->state = level;
+		aw_haptic->activate_mode = AW_RAM_LOOP_MODE;
+		aw_haptic->func->set_wav_seq(aw_haptic, 0, 1);
+		aw_haptic->func->set_wav_seq(aw_haptic, 1, 0);
+		aw_haptic->func->set_wav_loop(aw_haptic, 0, 0x00);
+		mutex_unlock(&aw_haptic->lock);
+		schedule_work(&aw_haptic->vibrator_work);
+		return;
+	}
+#endif
+
 	if (duration == 0) {
 		transient_data->activate = 0;
 		aw_info("duration is 0, no work");
